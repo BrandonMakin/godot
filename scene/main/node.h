@@ -124,6 +124,7 @@ private:
 
 		NetworkMode network_mode;
 		Node *network_owner;
+		int network_remote_owner;
 		Map<StringName, RPCMode> rpc_methods;
 		Map<StringName, RPCMode> rpc_properties;
 
@@ -394,8 +395,10 @@ public:
 	/* NETWORK */
 
 	void set_network_mode(NetworkMode p_mode);
+	void set_network_remote_owner(int p_owner);
 	NetworkMode get_network_mode() const;
 	bool is_network_master() const;
+	bool is_network_remote_owner(int p_owner) const;
 
 	void rpc_config(const StringName &p_method, RPCMode p_mode); // config a local method for RPC
 	void rset_config(const StringName &p_property, RPCMode p_mode); // config a local property for RPC

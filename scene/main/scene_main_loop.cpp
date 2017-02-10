@@ -1978,6 +1978,8 @@ void SceneTree::_network_process_packet(int p_from, const uint8_t *p_packet, int
 				}
 			}
 
+			ERR_FAIL_COND(!node->is_network_remote_owner(p_from));
+
 			ERR_FAIL_COND(p_packet_len < 6);
 
 			//detect cstring end

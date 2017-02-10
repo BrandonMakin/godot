@@ -472,6 +472,11 @@ void Node::_propagate_pause_owner(Node *p_owner) {
 	}
 }
 
+void Node::set_network_remote_owner(int p_owner) {
+
+	data.network_remote_owner = p_owner;
+}
+
 void Node::set_network_mode(NetworkMode p_mode) {
 
 	if (data.network_mode == p_mode)
@@ -500,6 +505,30 @@ void Node::set_network_mode(NetworkMode p_mode) {
 Node::NetworkMode Node::get_network_mode() const {
 
 	return data.network_mode;
+}
+
+bool Node::is_network_remote_owner(int p_owner) const {
+
+	ERR_FAIL_COND_V(!is_inside_tree(), false);
+
+	switch (data.network_mode) {
+		case NETWORK_MODE_INHERIT: {
+
+			if (data.network_owner)
+				return data.network_owner->is_network_remote_owner(p_owner);
+			else
+				return data.network_remote_owner == 0 || data.network_remote_owner == p_owner;
+		} break;
+		case NETWORK_MODE_MASTER: {
+
+			return get_tree()->get_network_unique_id();
+		} break;
+		case NETWORK_MODE_SLAVE: {
+			return data.network_remote_owner == 0 || data.network_remote_owner == p_owner;
+		} break;
+	}
+
+	return false;
 }
 
 bool Node::is_network_master() const {
@@ -2979,6 +3008,7 @@ Node::Node() {
 	data.pause_owner = NULL;
 	data.network_mode = NETWORK_MODE_INHERIT;
 	data.network_owner = NULL;
+	data.network_remote_owner = 0;
 	data.path_cache = NULL;
 	data.parent_owned = false;
 	data.in_constructor = true;
