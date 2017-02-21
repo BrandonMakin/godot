@@ -37,7 +37,6 @@
 #include "viewport.h"
 
 VARIANT_ENUM_CAST(Node::PauseMode);
-VARIANT_ENUM_CAST(Node::NetworkMode);
 VARIANT_ENUM_CAST(Node::RPCMode);
 
 void Node::_notification(int p_notification) {
@@ -77,7 +76,7 @@ void Node::_notification(int p_notification) {
 				data.pause_owner = this;
 			}
 
-			if (data.network_mode == NETWORK_MODE_INHERIT) {
+			if (data.network_remote == 0) {
 
 				if (data.parent)
 					data.network_owner = data.parent->data.network_owner;
@@ -472,26 +471,21 @@ void Node::_propagate_pause_owner(Node *p_owner) {
 	}
 }
 
-void Node::set_network_remote_owner(int p_owner) {
+void Node::set_network_remote(int p_id) {
 
-	data.network_remote_owner = p_owner;
-}
-
-void Node::set_network_mode(NetworkMode p_mode) {
-
-	if (data.network_mode == p_mode)
+	if (data.network_remote == p_id)
 		return;
 
-	bool prev_inherits = data.network_mode == NETWORK_MODE_INHERIT;
-	data.network_mode = p_mode;
+	bool prev_inherits = data.network_remote == 0;
+	data.network_remote = p_id;
 	if (!is_inside_tree())
 		return; //pointless
-	if ((data.network_mode == NETWORK_MODE_INHERIT) == prev_inherits)
+	if ((data.network_remote == 0) == prev_inherits)
 		return; ///nothing changed
 
 	Node *owner = NULL;
 
-	if (data.network_mode == NETWORK_MODE_INHERIT) {
+	if (data.network_remote == 0) {
 
 		if (data.parent)
 			owner = data.parent->data.network_owner;
@@ -502,62 +496,44 @@ void Node::set_network_mode(NetworkMode p_mode) {
 	_propagate_network_owner(owner);
 }
 
-Node::NetworkMode Node::get_network_mode() const {
+int Node::get_network_remote() const {
 
-	return data.network_mode;
+	return data.network_remote;
 }
 
 bool Node::is_network_remote_owner(int p_owner) const {
 
 	ERR_FAIL_COND_V(!is_inside_tree(), false);
 
-	switch (data.network_mode) {
-		case NETWORK_MODE_INHERIT: {
+	if (data.network_remote == 0) { // inherited remote
 
-			if (data.network_owner)
-				return data.network_owner->is_network_remote_owner(p_owner);
-			else
-				return data.network_remote_owner == 0 || data.network_remote_owner == p_owner;
-		} break;
-		case NETWORK_MODE_MASTER: {
-
-			return get_tree()->get_network_unique_id();
-		} break;
-		case NETWORK_MODE_SLAVE: {
-			return data.network_remote_owner == 0 || data.network_remote_owner == p_owner;
-		} break;
+		if (data.network_owner)
+			data.network_owner->is_network_remote_owner(p_owner);
+		else
+			return p_owner == 1; // both server and client nodes are owned by the server by default
 	}
 
-	return false;
+	return p_owner == data.network_remote;
 }
 
 bool Node::is_network_master() const {
 
 	ERR_FAIL_COND_V(!is_inside_tree(), false);
 
-	switch (data.network_mode) {
-		case NETWORK_MODE_INHERIT: {
+	if (data.network_remote == 0) {
 
-			if (data.network_owner)
-				return data.network_owner->is_network_master();
-			else
-				return get_tree()->is_network_server();
-		} break;
-		case NETWORK_MODE_MASTER: {
-
-			return true;
-		} break;
-		case NETWORK_MODE_SLAVE: {
-			return false;
-		} break;
+		if (data.network_owner)
+			return data.network_owner->is_network_master();
+		else
+			return get_tree()->is_network_server(); // clients are slave to master by default
 	}
 
-	return false;
+	return data.network_remote == get_tree()->get_network_unique_id();
 }
 
 void Node::_propagate_network_owner(Node *p_owner) {
 
-	if (data.network_mode != NETWORK_MODE_INHERIT)
+	if (data.network_remote != 0)
 		return;
 	data.network_owner = p_owner;
 	for (int i = 0; i < data.children.size(); i++) {
@@ -2874,10 +2850,8 @@ void Node::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("request_ready"), &Node::request_ready);
 
-	ClassDB::bind_method(D_METHOD("set_network_mode", "mode"), &Node::set_network_mode);
-	ClassDB::bind_method(D_METHOD("get_network_mode"), &Node::get_network_mode);
-
-	ClassDB::bind_method(D_METHOD("is_network_master"), &Node::is_network_master);
+	ClassDB::bind_method(D_METHOD("set_network_remote", "id"), &Node::set_network_remote);
+	ClassDB::bind_method(D_METHOD("get_network_remote"), &Node::get_network_remote);
 
 	ClassDB::bind_method(D_METHOD("rpc_config", "method", "mode"), &Node::rpc_config);
 	ClassDB::bind_method(D_METHOD("rset_config", "property", "mode"), &Node::rset_config);
@@ -2930,10 +2904,6 @@ void Node::_bind_methods() {
 	BIND_CONSTANT(NOTIFICATION_TRANSLATION_CHANGED);
 	BIND_CONSTANT(NOTIFICATION_INTERNAL_PROCESS);
 	BIND_CONSTANT(NOTIFICATION_INTERNAL_FIXED_PROCESS);
-
-	BIND_CONSTANT(NETWORK_MODE_INHERIT);
-	BIND_CONSTANT(NETWORK_MODE_MASTER);
-	BIND_CONSTANT(NETWORK_MODE_SLAVE);
 
 	BIND_CONSTANT(RPC_MODE_DISABLED);
 	BIND_CONSTANT(RPC_MODE_REMOTE);
@@ -3006,9 +2976,8 @@ Node::Node() {
 	data.unhandled_key_input = false;
 	data.pause_mode = PAUSE_MODE_INHERIT;
 	data.pause_owner = NULL;
-	data.network_mode = NETWORK_MODE_INHERIT;
+	data.network_remote = 0;
 	data.network_owner = NULL;
-	data.network_remote_owner = 0;
 	data.path_cache = NULL;
 	data.parent_owned = false;
 	data.in_constructor = true;
