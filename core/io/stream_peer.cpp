@@ -470,21 +470,20 @@ Error StreamPeerBuffer::put_partial_data(const uint8_t* p_data,int p_bytes, int 
 Error StreamPeerBuffer::get_data(uint8_t* p_buffer, int p_bytes){
 
 	int recv;
-	get_partial_data(p_buffer,p_bytes,recv);
-	if (recv!=p_bytes)
-		return ERR_INVALID_PARAMETER;
-
-	return OK;
+	return get_partial_data(p_buffer,p_bytes,recv);
 
 }
 Error StreamPeerBuffer::get_partial_data(uint8_t* p_buffer, int p_bytes,int &r_received){
 
+	Error err = OK;
 
 	if (pointer+p_bytes > data.size()) {
+		err = ERR_FILE_EOF;
+
 		r_received=data.size()-pointer;
 		if (r_received<=0) {
 			r_received=0;
-			return OK; //you got 0
+			return err; //you got 0
 		}
 	} else {
 		r_received=p_bytes;
@@ -492,6 +491,7 @@ Error StreamPeerBuffer::get_partial_data(uint8_t* p_buffer, int p_bytes,int &r_r
 
 	PoolVector<uint8_t>::Read r = data.read();
 	copymem(p_buffer,r.ptr(),r_received);
+	return err;
 }
 
 int StreamPeerBuffer::get_available_bytes() const {
