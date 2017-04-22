@@ -1978,7 +1978,8 @@ void SceneTree::_network_process_packet(int p_from, const uint8_t *p_packet, int
 				}
 			}
 
-			ERR_FAIL_COND(!node->is_network_remote_owner(p_from));
+			// Always allow full duplex in client owned nodes (server can always call, because it's trusted)
+			ERR_FAIL_COND(p_from != 1 && !node->is_network_remote_owner(p_from));
 
 			ERR_FAIL_COND(p_packet_len < 6);
 
