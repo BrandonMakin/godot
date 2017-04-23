@@ -76,7 +76,7 @@ void Node::_notification(int p_notification) {
 				data.pause_owner = this;
 			}
 
-			if (data.network_remote == 0) {
+			if (data.network_master == 0) {
 
 				if (data.parent)
 					data.network_owner = data.parent->data.network_owner;
@@ -471,21 +471,21 @@ void Node::_propagate_pause_owner(Node *p_owner) {
 	}
 }
 
-void Node::set_network_remote(int p_id) {
+void Node::set_network_master_id(int p_id) {
 
-	if (data.network_remote == p_id)
+	if (data.network_master == p_id)
 		return;
 
-	bool prev_inherits = data.network_remote == 0;
-	data.network_remote = p_id;
+	bool prev_inherits = data.network_master == 0;
+	data.network_master = p_id;
 	if (!is_inside_tree())
 		return; //pointless
-	if ((data.network_remote == 0) == prev_inherits)
+	if ((data.network_master == 0) == prev_inherits)
 		return; ///nothing changed
 
 	Node *owner = NULL;
 
-	if (data.network_remote == 0) {
+	if (data.network_master == 0) {
 
 		if (data.parent)
 			owner = data.parent->data.network_owner;
@@ -496,31 +496,31 @@ void Node::set_network_remote(int p_id) {
 	_propagate_network_owner(owner);
 }
 
-int Node::get_network_remote() const {
+int Node::get_network_master_id() const {
 
-	return data.network_remote;
+	return data.network_master;
 }
 
-bool Node::is_network_remote_owner(int p_owner) const {
+bool Node::is_network_master_id(int p_owner) const {
 
 	ERR_FAIL_COND_V(!is_inside_tree(), false);
 
-	if (data.network_remote == 0) { // inherited remote
+	if (data.network_master == 0) { // inherited remote
 
 		if (data.network_owner)
-			data.network_owner->is_network_remote_owner(p_owner);
+			data.network_owner->is_network_master_id(p_owner);
 		else
 			return p_owner == 1; // both server and client nodes are owned by the server by default
 	}
 
-	return p_owner == data.network_remote;
+	return p_owner == data.network_master;
 }
 
 bool Node::is_network_master() const {
 
 	ERR_FAIL_COND_V(!is_inside_tree(), false);
 
-	if (data.network_remote == 0) {
+	if (data.network_master == 0) {
 
 		if (data.network_owner)
 			return data.network_owner->is_network_master();
@@ -528,12 +528,12 @@ bool Node::is_network_master() const {
 			return get_tree()->is_network_server(); // clients are slave to master by default
 	}
 
-	return data.network_remote == get_tree()->get_network_unique_id();
+	return data.network_master == get_tree()->get_network_unique_id();
 }
 
 void Node::_propagate_network_owner(Node *p_owner) {
 
-	if (data.network_remote != 0)
+	if (data.network_master != 0)
 		return;
 	data.network_owner = p_owner;
 	for (int i = 0; i < data.children.size(); i++) {
@@ -2850,8 +2850,9 @@ void Node::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("request_ready"), &Node::request_ready);
 
-	ClassDB::bind_method(D_METHOD("set_network_remote", "id"), &Node::set_network_remote);
-	ClassDB::bind_method(D_METHOD("get_network_remote"), &Node::get_network_remote);
+	ClassDB::bind_method(D_METHOD("set_network_master_id", "id"), &Node::set_network_master_id);
+	ClassDB::bind_method(D_METHOD("get_network_master_id"), &Node::get_network_master_id);
+	ClassDB::bind_method(D_METHOD("is_network_master"), &Node::is_network_master);
 
 	ClassDB::bind_method(D_METHOD("rpc_config", "method", "mode"), &Node::rpc_config);
 	ClassDB::bind_method(D_METHOD("rset_config", "property", "mode"), &Node::rset_config);
@@ -2976,7 +2977,7 @@ Node::Node() {
 	data.unhandled_key_input = false;
 	data.pause_mode = PAUSE_MODE_INHERIT;
 	data.pause_owner = NULL;
-	data.network_remote = 0;
+	data.network_master = 0;
 	data.network_owner = NULL;
 	data.path_cache = NULL;
 	data.parent_owned = false;

@@ -115,7 +115,7 @@ private:
 		PauseMode pause_mode;
 		Node *pause_owner;
 
-		int network_remote;
+		int network_master;
 		Node *network_owner;
 		Map<StringName, RPCMode> rpc_methods;
 		Map<StringName, RPCMode> rpc_properties;
@@ -386,10 +386,10 @@ public:
 	bool is_displayed_folded() const;
 	/* NETWORK */
 
-	void set_network_remote(int p_id);
-	int get_network_remote() const;
+	void set_network_master_id(int p_id);
+	int get_network_master_id() const;
 	bool is_network_master() const;
-	bool is_network_remote_owner(int p_id) const;
+	bool is_network_master_id(int p_id) const;
 
 	void rpc_config(const StringName &p_method, RPCMode p_mode); // config a local method for RPC
 	void rset_config(const StringName &p_property, RPCMode p_mode); // config a local property for RPC
