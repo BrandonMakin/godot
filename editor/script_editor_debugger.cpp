@@ -1036,7 +1036,10 @@ void ScriptEditorDebugger::start() {
 		perf_max[i] = 0;
 	}
 
-	server->listen(port);
+	if (server->listen(port) != OK) {
+		EditorNode::get_log()->add_message("** Error binding to debug host/port **");
+		return;
+	}
 	set_process(true);
 }
 
