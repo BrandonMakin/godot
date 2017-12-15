@@ -29,15 +29,15 @@
 /*************************************************************************/
 #ifdef WINDOWS_ENABLED
 
-#ifndef STREAM_PEER_WINSOCK_H
-#define STREAM_PEER_WINSOCK_H
+#ifndef STREAM_PEER_TCP_WINSOCK_H
+#define STREAM_PEER_TCP_WINSOCK_H
 
 #include "error_list.h"
 
 #include "core/io/ip_address.h"
 #include "core/io/stream_peer_tcp.h"
 
-class StreamPeerWinsock : public StreamPeerTCP {
+class StreamPeerTCPWinsock : public StreamPeerTCP {
 
 protected:
 	mutable Status status;
@@ -82,10 +82,10 @@ public:
 
 	virtual void set_nodelay(bool p_enabled);
 
-	StreamPeerWinsock();
-	~StreamPeerWinsock();
+	StreamPeerTCPWinsock();
+	~StreamPeerTCPWinsock();
 };
 
-#endif // TCP_SOCKET_POSIX_H
+#endif // STREAM_PEER_TCP_WINSOCK_H
 
 #endif

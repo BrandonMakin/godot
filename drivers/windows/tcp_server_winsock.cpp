@@ -29,7 +29,7 @@
 /*************************************************************************/
 #include "tcp_server_winsock.h"
 
-#include "stream_peer_winsock.h"
+#include "stream_peer_tcp_winsock.h"
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -151,7 +151,7 @@ Ref<StreamPeerTCP> TCPServerWinsock::take_connection() {
 	int fd = accept(listen_sockfd, (struct sockaddr *)&their_addr, &sin_size);
 	ERR_FAIL_COND_V(fd == INVALID_SOCKET, NULL);
 
-	Ref<StreamPeerWinsock> conn = memnew(StreamPeerWinsock);
+	Ref<StreamPeerTCPWinsock> conn = memnew(StreamPeerTCPWinsock);
 	IP_Address ip;
 	int port;
 	_set_ip_addr_port(ip, port, &their_addr);
