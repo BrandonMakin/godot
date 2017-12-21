@@ -199,6 +199,15 @@ changes to ensure they build for Javascript/HTML5. Those
 changes are marked with `// -- GODOT --` comments.
 
 
+## libwebsockets
+
+- Upstream: https://github.com/warmcat/libwebsockets
+- Version: 2.4.1
+- License: LGPLv2.1 + static linking exception
+
+Important: `lws_config.h` and `lws_config_private.h` contains custom 
+Godot build configurations, check them out when updating.
+
 ## minizip
 
 - Upstream: http://www.zlib.net
