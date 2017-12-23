@@ -41,6 +41,7 @@ protected:
 	void _network_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len);
 	void _network_simplify_path(int p_from, const uint8_t *p_packet, int p_packet_len);
 	void _network_confirm_path(int p_from, const uint8_t *p_packet, int p_packet_len);
+	bool _network_send_confirm_path(NodePath p_path, PathSentCache *psc, int p_from);
 	Node *_network_get_node(int p_from, const uint8_t *p_packet, int p_packet_len);
 	void _network_process_rpc(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset);
 	void _network_process_rset(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset);

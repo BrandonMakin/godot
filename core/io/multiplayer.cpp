@@ -232,6 +232,56 @@ void MultiplayerProtocol::_network_confirm_path(int p_from, const uint8_t *p_pac
 	E->get() = true;
 }
 
+bool MultiplayerProtocol::_network_send_confirm_path(NodePath p_path, PathSentCache *psc, int p_target) {
+	bool has_all_peers = true;
+	List<int> peers_to_add; //if one is missing, take note to add it
+
+	for (Set<int>::Element *E = connected_peers.front(); E; E = E->next()) {
+
+		if (p_target < 0 && E->get() == -p_target)
+			continue; //continue, excluded
+
+		if (p_target > 0 && E->get() != p_target)
+			continue; //continue, not for this peer
+
+		Map<int, bool>::Element *F = psc->confirmed_peers.find(E->get());
+
+		if (!F || F->get() == false) {
+			//path was not cached, or was cached but is unconfirmed
+			if (!F) {
+				//not cached at all, take note
+				peers_to_add.push_back(E->get());
+			}
+
+			has_all_peers = false;
+		}
+	}
+
+	//those that need to be added, send a message for this
+
+	for (List<int>::Element *E = peers_to_add.front(); E; E = E->next()) {
+
+		//encode function name
+		CharString pname = String(p_path).utf8();
+		int len = encode_cstring(pname.get_data(), NULL);
+
+		Vector<uint8_t> packet;
+
+		packet.resize(1 + 4 + len);
+		packet[0] = NETWORK_COMMAND_SIMPLIFY_PATH;
+		encode_uint32(psc->id, &packet[1]);
+		encode_cstring(pname.get_data(), &packet[5]);
+
+		network_peer->set_target_peer(E->get()); //to all of you
+		network_peer->set_transfer_mode(NetworkedMultiplayerPeer::TRANSFER_MODE_RELIABLE);
+		network_peer->put_packet(packet.ptr(), packet.size());
+
+		psc->confirmed_peers.insert(E->get(), false); //insert into confirmed, but as false since it was not confirmed
+	}
+
+	return has_all_peers;
+}
+
 void MultiplayerProtocol::rpc(Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount) {
 
 	if (network_peer.is_null()) {
@@ -323,52 +373,7 @@ void MultiplayerProtocol::rpc(Node *p_from, int p_to, bool p_unreliable, bool p_
 	}
 
 	//see if all peers have cached path (is so, call can be fast)
-	bool has_all_peers = true;
-
-	List<int> peers_to_add; //if one is missing, take note to add it
-
-	for (Set<int>::Element *E = connected_peers.front(); E; E = E->next()) {
-
-		if (p_to < 0 && E->get() == -p_to)
-			continue; //continue, excluded
-
-		if (p_to > 0 && E->get() != p_to)
-			continue; //continue, not for this peer
-
-		Map<int, bool>::Element *F = psc->confirmed_peers.find(E->get());
-
-		if (!F || F->get() == false) {
-			//path was not cached, or was cached but is unconfirmed
-			if (!F) {
-				//not cached at all, take note
-				peers_to_add.push_back(E->get());
-			}
-
-			has_all_peers = false;
-		}
-	}
-
-	//those that need to be added, send a message for this
-
-	for (List<int>::Element *E = peers_to_add.front(); E; E = E->next()) {
-
-		//encode function name
-		CharString pname = String(from_path).utf8();
-		int len = encode_cstring(pname.get_data(), NULL);
-
-		Vector<uint8_t> packet;
-
-		packet.resize(1 + 4 + len);
-		packet[0] = NETWORK_COMMAND_SIMPLIFY_PATH;
-		encode_uint32(psc->id, &packet[1]);
-		encode_cstring(pname.get_data(), &packet[5]);
-
-		network_peer->set_target_peer(E->get()); //to all of you
-		network_peer->set_transfer_mode(NetworkedMultiplayerPeer::TRANSFER_MODE_RELIABLE);
-		network_peer->put_packet(packet.ptr(), packet.size());
-
-		psc->confirmed_peers.insert(E->get(), false); //insert into confirmed, but as false since it was not confirmed
-	}
+	bool has_all_peers = _network_send_confirm_path(from_path, psc, p_to);
 
 	//take chance and set transfer mode, since all send methods will use it
 	network_peer->set_transfer_mode(p_unreliable ? NetworkedMultiplayerPeer::TRANSFER_MODE_UNRELIABLE : NetworkedMultiplayerPeer::TRANSFER_MODE_RELIABLE);
