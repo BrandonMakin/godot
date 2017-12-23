@@ -12,6 +12,8 @@ protected:
 	static void _bind_methods() {
 	}
 
+	void _network_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len);
+
 public:
 	enum NetworkCommands {
 		NETWORK_COMMAND_REMOTE_CALL,
@@ -62,6 +64,8 @@ public:
 
 	MultiplayerState network_state;
 
+	void clear() { network_state.clear(); }
+
 	void set_root(Node *p_node) {
 		network_state.root = p_node;
 	}
@@ -74,42 +78,17 @@ public:
 		return network_state.peer;
 	}
 
-	void poll() {
-		network_poll(network_state);
-	}
-
+	void poll();
 	void rpcp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount);
 	void rsetp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value);
 	void rpc(Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount);
 
-	void add_peer(int p_id) {
-		_add_peer(network_state, p_id);
-	}
+	void add_peer(int p_id);
+	void del_peer(int p_id);
 
-	void del_peer(int p_id) {
-		_del_peer(network_state, p_id);
-	}
-
-	void clear() {
-		network_state.clear();
-	}
-
-	bool has_network_peer() const {
-		return network_state.peer.is_valid();
-	}
-
-	const Set<int> get_connected_peers() const {
-		return network_state.connected_peers;
-	}
-
-	int get_rpc_sender_id() const {
-		return network_state.rpc_sender_id;
-	}
-
-	static void network_poll(MultiplayerState &state);
-	static void _network_process_packet(MultiplayerState &state, int p_from, const uint8_t *p_packet, int p_packet_len);
-	static void _add_peer(MultiplayerState &state, int p_id);
-	static void _del_peer(MultiplayerState &state, int p_id);
+	bool has_network_peer() const { return network_state.peer.is_valid(); }
+	const Set<int> get_connected_peers() const { return network_state.connected_peers; }
+	int get_rpc_sender_id() const { return network_state.rpc_sender_id; }
 };
 
 #endif // MULTIPLAYER_PROTOCOL_H
