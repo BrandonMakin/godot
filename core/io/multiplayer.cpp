@@ -404,6 +404,57 @@ void MultiplayerProtocol::del_peer(MultiplayerState &state, int p_id) {
 	state.path_get_cache.erase(p_id); //I no longer need your cache, sorry
 }
 
+bool _should_call_native(Node::RPCMode mode, bool is_master, bool &r_skip_rpc) {
+
+	switch (mode) {
+
+		case Node::RPC_MODE_DISABLED: {
+			//do nothing
+		} break;
+		case Node::RPC_MODE_REMOTE: {
+			//do nothing also, no need to call local
+		} break;
+		case Node::RPC_MODE_SYNC: {
+			//call it, sync always results in call
+			return true;
+		} break;
+		case Node::RPC_MODE_MASTER: {
+			if (is_master)
+				r_skip_rpc = true; //no other master so..
+			return is_master;
+		} break;
+		case Node::RPC_MODE_SLAVE: {
+			return !is_master;
+		} break;
+	}
+	return false;
+}
+
+bool _should_call_script(ScriptInstance::RPCMode mode, bool is_master, bool &r_skip_rpc) {
+	switch (mode) {
+
+		case ScriptInstance::RPC_MODE_DISABLED: {
+			//do nothing
+		} break;
+		case ScriptInstance::RPC_MODE_REMOTE: {
+			//do nothing also, no need to call local
+		} break;
+		case ScriptInstance::RPC_MODE_SYNC: {
+			//call it, sync always results in call
+			return true;
+		} break;
+		case ScriptInstance::RPC_MODE_MASTER: {
+			if (is_master)
+				r_skip_rpc = true; //no other master so..
+			return is_master;
+		} break;
+		case ScriptInstance::RPC_MODE_SLAVE: {
+			return !is_master;
+		} break;
+	}
+	return false;
+}
+
 void MultiplayerProtocol::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount) {
 
 	ERR_FAIL_COND(!p_node->is_inside_tree());
@@ -419,29 +470,7 @@ void MultiplayerProtocol::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, c
 
 		const Map<StringName, Node::RPCMode>::Element *E = p_node->get_node_rpc_mode(p_method);
 		if (E) {
-
-			switch (E->get()) {
-
-				case Node::RPC_MODE_DISABLED: {
-					//do nothing
-				} break;
-				case Node::RPC_MODE_REMOTE: {
-					//do nothing also, no need to call local
-				} break;
-				case Node::RPC_MODE_SYNC: {
-					//call it, sync always results in call
-					call_local_native = true;
-				} break;
-				case Node::RPC_MODE_MASTER: {
-					call_local_native = is_master;
-					if (call_local_native) {
-						skip_rpc = true; //no other master so..
-					}
-				} break;
-				case Node::RPC_MODE_SLAVE: {
-					call_local_native = !is_master;
-				} break;
-			}
+			call_local_native = _should_call_native(E->get(), is_master, skip_rpc);
 		}
 
 		if (call_local_native) {
@@ -449,29 +478,7 @@ void MultiplayerProtocol::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, c
 		} else if (p_node->get_script_instance()) {
 			//attempt with script
 			ScriptInstance::RPCMode rpc_mode = p_node->get_script_instance()->get_rpc_mode(p_method);
-
-			switch (rpc_mode) {
-
-				case ScriptInstance::RPC_MODE_DISABLED: {
-					//do nothing
-				} break;
-				case ScriptInstance::RPC_MODE_REMOTE: {
-					//do nothing also, no need to call local
-				} break;
-				case ScriptInstance::RPC_MODE_SYNC: {
-					//call it, sync always results in call
-					call_local_script = true;
-				} break;
-				case ScriptInstance::RPC_MODE_MASTER: {
-					call_local_script = is_master;
-					if (call_local_script) {
-						skip_rpc = true; //no other master so..
-					}
-				} break;
-				case ScriptInstance::RPC_MODE_SLAVE: {
-					call_local_script = !is_master;
-				} break;
-			}
+			call_local_script = _should_call_script(rpc_mode, is_master, skip_rpc);
 		}
 	}
 
@@ -519,29 +526,7 @@ void MultiplayerProtocol::rsetp(Node *p_node, int p_peer_id, bool p_unreliable, 
 		const Map<StringName, Node::RPCMode>::Element *E = p_node->get_node_rset_mode(p_property);
 		if (E) {
 
-			switch (E->get()) {
-
-				case Node::RPC_MODE_DISABLED: {
-					//do nothing
-				} break;
-				case Node::RPC_MODE_REMOTE: {
-					//do nothing also, no need to call local
-				} break;
-				case Node::RPC_MODE_SYNC: {
-					//call it, sync always results in call
-					set_local = true;
-				} break;
-				case Node::RPC_MODE_MASTER: {
-					set_local = is_master;
-					if (set_local) {
-						skip_rset = true;
-					}
-
-				} break;
-				case Node::RPC_MODE_SLAVE: {
-					set_local = !is_master;
-				} break;
-			}
+			set_local = _should_call_native(E->get(), is_master, skip_rset);
 		}
 
 		if (set_local) {
@@ -557,28 +542,7 @@ void MultiplayerProtocol::rsetp(Node *p_node, int p_peer_id, bool p_unreliable, 
 			//attempt with script
 			ScriptInstance::RPCMode rpc_mode = p_node->get_script_instance()->get_rset_mode(p_property);
 
-			switch (rpc_mode) {
-
-				case ScriptInstance::RPC_MODE_DISABLED: {
-					//do nothing
-				} break;
-				case ScriptInstance::RPC_MODE_REMOTE: {
-					//do nothing also, no need to call local
-				} break;
-				case ScriptInstance::RPC_MODE_SYNC: {
-					//call it, sync always results in call
-					set_local = true;
-				} break;
-				case ScriptInstance::RPC_MODE_MASTER: {
-					set_local = is_master;
-					if (set_local) {
-						skip_rset = true;
-					}
-				} break;
-				case ScriptInstance::RPC_MODE_SLAVE: {
-					set_local = !is_master;
-				} break;
-			}
+			set_local = _should_call_script(rpc_mode, is_master, skip_rset);
 
 			if (set_local) {
 
