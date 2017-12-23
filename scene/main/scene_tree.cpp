@@ -484,7 +484,7 @@ bool SceneTree::idle(float p_time) {
 
 	idle_process_time = p_time;
 
-	MultiplayerProtocol::network_poll(network_state);
+	network_protocol->poll();
 
 	emit_signal("idle_frame");
 
@@ -1631,13 +1631,13 @@ Ref<SceneTreeTimer> SceneTree::create_timer(float p_delay_sec, bool p_process_pa
 
 void SceneTree::_network_peer_connected(int p_id) {
 
-	MultiplayerProtocol::add_peer(network_state, p_id);
+	network_protocol->add_peer(p_id);
 	emit_signal("network_peer_connected", p_id);
 }
 
 void SceneTree::_network_peer_disconnected(int p_id) {
 
-	MultiplayerProtocol::del_peer(network_state, p_id);
+	network_protocol->del_peer(p_id);
 	emit_signal("network_peer_disconnected", p_id);
 }
 
@@ -1657,55 +1657,58 @@ void SceneTree::_server_disconnected() {
 }
 
 void SceneTree::set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_network_peer) {
-	if (network_state.peer.is_valid()) {
-		network_state.peer->disconnect("peer_connected", this, "_network_peer_connected");
-		network_state.peer->disconnect("peer_disconnected", this, "_network_peer_disconnected");
-		network_state.peer->disconnect("connection_succeeded", this, "_connected_to_server");
-		network_state.peer->disconnect("connection_failed", this, "_connection_failed");
-		network_state.peer->disconnect("server_disconnected", this, "_server_disconnected");
-		network_state.clear();
+	Ref<NetworkedMultiplayerPeer> peer = network_protocol->get_network_peer();
+	if (peer.is_valid()) {
+		peer = network_protocol->get_network_peer();
+		peer->disconnect("peer_connected", this, "_network_peer_connected");
+		peer->disconnect("peer_disconnected", this, "_network_peer_disconnected");
+		peer->disconnect("connection_succeeded", this, "_connected_to_server");
+		peer->disconnect("connection_failed", this, "_connection_failed");
+		peer->disconnect("server_disconnected", this, "_server_disconnected");
+		network_protocol->clear();
 	}
+
+	peer = p_network_peer;
+	network_protocol->set_network_peer(peer);
 
 	ERR_EXPLAIN("Supplied NetworkedNetworkPeer must be connecting or connected.");
 	ERR_FAIL_COND(p_network_peer.is_valid() && p_network_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED);
 
-	network_state.peer = p_network_peer;
-
-	if (network_state.peer.is_valid()) {
-		network_state.peer->connect("peer_connected", this, "_network_peer_connected");
-		network_state.peer->connect("peer_disconnected", this, "_network_peer_disconnected");
-		network_state.peer->connect("connection_succeeded", this, "_connected_to_server");
-		network_state.peer->connect("connection_failed", this, "_connection_failed");
-		network_state.peer->connect("server_disconnected", this, "_server_disconnected");
+	if (peer.is_valid()) {
+		peer->connect("peer_connected", this, "_network_peer_connected");
+		peer->connect("peer_disconnected", this, "_network_peer_disconnected");
+		peer->connect("connection_succeeded", this, "_connected_to_server");
+		peer->connect("connection_failed", this, "_connection_failed");
+		peer->connect("server_disconnected", this, "_server_disconnected");
 	}
 }
 
 Ref<NetworkedMultiplayerPeer> SceneTree::get_network_peer() const {
 
-	return network_state.peer;
+	return network_protocol->get_network_peer();
 }
 
 bool SceneTree::is_network_server() const {
 
-	ERR_FAIL_COND_V(!network_state.peer.is_valid(), false);
-	return network_state.peer->is_server();
+	ERR_FAIL_COND_V(!network_protocol->has_network_peer(), false);
+	return network_protocol->get_network_peer()->is_server();
 }
 
 bool SceneTree::has_network_peer() const {
-	return network_state.peer.is_valid();
+	return network_protocol->has_network_peer();
 }
 
 int SceneTree::get_network_unique_id() const {
 
-	ERR_FAIL_COND_V(!network_state.peer.is_valid(), 0);
-	return network_state.peer->get_unique_id();
+	ERR_FAIL_COND_V(!network_protocol->has_network_peer(), 0);
+	return network_protocol->get_network_peer()->get_unique_id();
 }
 
 Vector<int> SceneTree::get_network_connected_peers() const {
-	ERR_FAIL_COND_V(!network_state.peer.is_valid(), Vector<int>());
+	ERR_FAIL_COND_V(!!network_protocol->has_network_peer(), Vector<int>());
 
 	Vector<int> ret;
-	for (Set<int>::Element *E = network_state.connected_peers.front(); E; E = E->next()) {
+	for (Set<int>::Element *E = network_protocol->get_connected_peers().front(); E; E = E->next()) {
 		ret.push_back(E->get());
 	}
 
@@ -1713,19 +1716,19 @@ Vector<int> SceneTree::get_network_connected_peers() const {
 }
 
 int SceneTree::get_rpc_sender_id() const {
-	return network_state.rpc_sender_id;
+	return network_protocol->get_rpc_sender_id();
 }
 
 void SceneTree::set_refuse_new_network_connections(bool p_refuse) {
-	ERR_FAIL_COND(!network_state.peer.is_valid());
-	network_state.peer->set_refuse_new_connections(p_refuse);
+	ERR_FAIL_COND(!network_protocol->has_network_peer());
+	network_protocol->get_network_peer()->set_refuse_new_connections(p_refuse);
 }
 
 bool SceneTree::is_refusing_new_network_connections() const {
 
-	ERR_FAIL_COND_V(!network_state.peer.is_valid(), false);
+	ERR_FAIL_COND_V(!network_protocol->has_network_peer(), false);
 
-	return network_state.peer->is_refusing_new_connections();
+	return network_protocol->get_network_peer()->is_refusing_new_connections();
 }
 
 void SceneTree::_bind_methods() {
@@ -1929,7 +1932,8 @@ SceneTree::SceneTree() {
 		root->set_world(Ref<World>(memnew(World)));
 
 	// Initialize network state
-	network_state.root = root;
+	network_protocol = Ref<MultiplayerProtocol>(memnew(MultiplayerProtocol));
+	network_protocol->set_root(root);
 
 	//root->set_world_2d( Ref<World2D>( memnew( World2D )));
 	root->set_as_audio_listener(true);

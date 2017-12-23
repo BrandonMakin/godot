@@ -394,12 +394,12 @@ void MultiplayerProtocol::_rpc(MultiplayerState &state, Node *p_from, int p_to, 
 	}
 }
 
-void MultiplayerProtocol::add_peer(MultiplayerState &state, int p_id) {
+void MultiplayerProtocol::_add_peer(MultiplayerState &state, int p_id) {
 	state.connected_peers.insert(p_id);
 	state.path_get_cache.insert(p_id, PathGetCache());
 }
 
-void MultiplayerProtocol::del_peer(MultiplayerState &state, int p_id) {
+void MultiplayerProtocol::_del_peer(MultiplayerState &state, int p_id) {
 	state.connected_peers.erase(p_id);
 	state.path_get_cache.erase(p_id); //I no longer need your cache, sorry
 }
