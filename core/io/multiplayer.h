@@ -39,9 +39,11 @@ protected:
 	}
 
 	void _network_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len);
-	void _network_process_call(int p_from, const uint8_t *p_packet, int p_packet_len);
 	void _network_simplify_path(int p_from, const uint8_t *p_packet, int p_packet_len);
 	void _network_confirm_path(int p_from, const uint8_t *p_packet, int p_packet_len);
+	Node *_network_get_node(int p_from, const uint8_t *p_packet, int p_packet_len);
+	void _network_process_rpc(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset);
+	void _network_process_rset(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset);
 
 public:
 	enum NetworkCommands {
