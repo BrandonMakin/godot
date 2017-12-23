@@ -509,7 +509,7 @@ void Node::rpc(const StringName &p_method, VARIANT_ARG_DECLARE) {
 		argc++;
 	}
 
-	rpcp(0, false, p_method, argptr, argc);
+	MultiplayerProtocol::rpcp(this, 0, false, p_method, argptr, argc);
 }
 
 void Node::rpc_id(int p_peer_id, const StringName &p_method, VARIANT_ARG_DECLARE) {
@@ -523,7 +523,7 @@ void Node::rpc_id(int p_peer_id, const StringName &p_method, VARIANT_ARG_DECLARE
 		argc++;
 	}
 
-	rpcp(p_peer_id, false, p_method, argptr, argc);
+	MultiplayerProtocol::rpcp(this, p_peer_id, false, p_method, argptr, argc);
 }
 
 void Node::rpc_unreliable(const StringName &p_method, VARIANT_ARG_DECLARE) {
@@ -537,7 +537,7 @@ void Node::rpc_unreliable(const StringName &p_method, VARIANT_ARG_DECLARE) {
 		argc++;
 	}
 
-	rpcp(0, true, p_method, argptr, argc);
+	MultiplayerProtocol::rpcp(this, 0, true, p_method, argptr, argc);
 }
 
 void Node::rpc_unreliable_id(int p_peer_id, const StringName &p_method, VARIANT_ARG_DECLARE) {
@@ -551,7 +551,7 @@ void Node::rpc_unreliable_id(int p_peer_id, const StringName &p_method, VARIANT_
 		argc++;
 	}
 
-	rpcp(p_peer_id, true, p_method, argptr, argc);
+	MultiplayerProtocol::rpcp(this, p_peer_id, true, p_method, argptr, argc);
 }
 
 Variant Node::_rpc_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
@@ -571,7 +571,7 @@ Variant Node::_rpc_bind(const Variant **p_args, int p_argcount, Variant::CallErr
 
 	StringName method = *p_args[0];
 
-	rpcp(0, false, method, &p_args[1], p_argcount - 1);
+	MultiplayerProtocol::rpcp(this, 0, false, method, &p_args[1], p_argcount - 1);
 
 	r_error.error = Variant::CallError::CALL_OK;
 	return Variant();
@@ -602,7 +602,7 @@ Variant Node::_rpc_id_bind(const Variant **p_args, int p_argcount, Variant::Call
 	int peer_id = *p_args[0];
 	StringName method = *p_args[1];
 
-	rpcp(peer_id, false, method, &p_args[2], p_argcount - 2);
+	MultiplayerProtocol::rpcp(this, peer_id, false, method, &p_args[2], p_argcount - 2);
 
 	r_error.error = Variant::CallError::CALL_OK;
 	return Variant();
@@ -625,7 +625,7 @@ Variant Node::_rpc_unreliable_bind(const Variant **p_args, int p_argcount, Varia
 
 	StringName method = *p_args[0];
 
-	rpcp(0, true, method, &p_args[1], p_argcount - 1);
+	MultiplayerProtocol::rpcp(this, 0, true, method, &p_args[1], p_argcount - 1);
 
 	r_error.error = Variant::CallError::CALL_OK;
 	return Variant();
@@ -656,228 +656,42 @@ Variant Node::_rpc_unreliable_id_bind(const Variant **p_args, int p_argcount, Va
 	int peer_id = *p_args[0];
 	StringName method = *p_args[1];
 
-	rpcp(peer_id, true, method, &p_args[2], p_argcount - 2);
+	MultiplayerProtocol::rpcp(this, peer_id, true, method, &p_args[2], p_argcount - 2);
 
 	r_error.error = Variant::CallError::CALL_OK;
 	return Variant();
 }
 
-void Node::rpcp(int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount) {
-
-	ERR_FAIL_COND(!is_inside_tree());
-
-	bool skip_rpc = false;
-	bool call_local_native = false;
-	bool call_local_script = false;
-
-	if (p_peer_id == 0 || p_peer_id == get_tree()->get_network_unique_id() || (p_peer_id < 0 && p_peer_id != -get_tree()->get_network_unique_id())) {
-		//check that send mode can use local call
-
-		Map<StringName, RPCMode>::Element *E = data.rpc_methods.find(p_method);
-		if (E) {
-
-			switch (E->get()) {
-
-				case RPC_MODE_DISABLED: {
-					//do nothing
-				} break;
-				case RPC_MODE_REMOTE: {
-					//do nothing also, no need to call local
-				} break;
-				case RPC_MODE_SYNC: {
-					//call it, sync always results in call
-					call_local_native = true;
-				} break;
-				case RPC_MODE_MASTER: {
-					call_local_native = is_network_master();
-					if (call_local_native) {
-						skip_rpc = true; //no other master so..
-					}
-				} break;
-				case RPC_MODE_SLAVE: {
-					call_local_native = !is_network_master();
-				} break;
-			}
-		}
-
-		if (call_local_native) {
-			// done below
-		} else if (get_script_instance()) {
-			//attempt with script
-			ScriptInstance::RPCMode rpc_mode = get_script_instance()->get_rpc_mode(p_method);
-
-			switch (rpc_mode) {
-
-				case ScriptInstance::RPC_MODE_DISABLED: {
-					//do nothing
-				} break;
-				case ScriptInstance::RPC_MODE_REMOTE: {
-					//do nothing also, no need to call local
-				} break;
-				case ScriptInstance::RPC_MODE_SYNC: {
-					//call it, sync always results in call
-					call_local_script = true;
-				} break;
-				case ScriptInstance::RPC_MODE_MASTER: {
-					call_local_script = is_network_master();
-					if (call_local_script) {
-						skip_rpc = true; //no other master so..
-					}
-				} break;
-				case ScriptInstance::RPC_MODE_SLAVE: {
-					call_local_script = !is_network_master();
-				} break;
-			}
-		}
-	}
-
-	if (!skip_rpc) {
-		get_tree()->_rpc(this, p_peer_id, p_unreliable, false, p_method, p_arg, p_argcount);
-	}
-
-	if (call_local_native) {
-		Variant::CallError ce;
-		call(p_method, p_arg, p_argcount, ce);
-		if (ce.error != Variant::CallError::CALL_OK) {
-			String error = Variant::get_call_error_text(this, p_method, p_arg, p_argcount, ce);
-			error = "rpc() aborted in local call:  - " + error;
-			ERR_PRINTS(error);
-			return;
-		}
-	}
-
-	if (call_local_script) {
-		Variant::CallError ce;
-		ce.error = Variant::CallError::CALL_OK;
-		get_script_instance()->call(p_method, p_arg, p_argcount, ce);
-		if (ce.error != Variant::CallError::CALL_OK) {
-			String error = Variant::get_call_error_text(this, p_method, p_arg, p_argcount, ce);
-			error = "rpc() aborted in script local call:  - " + error;
-			ERR_PRINTS(error);
-			return;
-		}
-	}
-}
-
 /******** RSET *********/
-
-void Node::rsetp(int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value) {
-
-	ERR_FAIL_COND(!is_inside_tree());
-
-	bool skip_rset = false;
-
-	if (p_peer_id == 0 || p_peer_id == get_tree()->get_network_unique_id() || (p_peer_id < 0 && p_peer_id != -get_tree()->get_network_unique_id())) {
-		//check that send mode can use local call
-
-		bool set_local = false;
-
-		Map<StringName, RPCMode>::Element *E = data.rpc_properties.find(p_property);
-		if (E) {
-
-			switch (E->get()) {
-
-				case RPC_MODE_DISABLED: {
-					//do nothing
-				} break;
-				case RPC_MODE_REMOTE: {
-					//do nothing also, no need to call local
-				} break;
-				case RPC_MODE_SYNC: {
-					//call it, sync always results in call
-					set_local = true;
-				} break;
-				case RPC_MODE_MASTER: {
-					set_local = is_network_master();
-					if (set_local) {
-						skip_rset = true;
-					}
-
-				} break;
-				case RPC_MODE_SLAVE: {
-					set_local = !is_network_master();
-				} break;
-			}
-		}
-
-		if (set_local) {
-			bool valid;
-			set(p_property, p_value, &valid);
-
-			if (!valid) {
-				String error = "rset() aborted in local set, property not found:  - " + String(p_property);
-				ERR_PRINTS(error);
-				return;
-			}
-		} else if (get_script_instance()) {
-			//attempt with script
-			ScriptInstance::RPCMode rpc_mode = get_script_instance()->get_rset_mode(p_property);
-
-			switch (rpc_mode) {
-
-				case ScriptInstance::RPC_MODE_DISABLED: {
-					//do nothing
-				} break;
-				case ScriptInstance::RPC_MODE_REMOTE: {
-					//do nothing also, no need to call local
-				} break;
-				case ScriptInstance::RPC_MODE_SYNC: {
-					//call it, sync always results in call
-					set_local = true;
-				} break;
-				case ScriptInstance::RPC_MODE_MASTER: {
-					set_local = is_network_master();
-					if (set_local) {
-						skip_rset = true;
-					}
-				} break;
-				case ScriptInstance::RPC_MODE_SLAVE: {
-					set_local = !is_network_master();
-				} break;
-			}
-
-			if (set_local) {
-
-				bool valid = get_script_instance()->set(p_property, p_value);
-
-				if (!valid) {
-					String error = "rset() aborted in local script set, property not found:  - " + String(p_property);
-					ERR_PRINTS(error);
-					return;
-				}
-			}
-		}
-	}
-
-	if (skip_rset)
-		return;
-
-	const Variant *vptr = &p_value;
-
-	get_tree()->_rpc(this, p_peer_id, p_unreliable, true, p_property, &vptr, 1);
-}
-
 void Node::rset(const StringName &p_property, const Variant &p_value) {
 
-	rsetp(0, false, p_property, p_value);
+	MultiplayerProtocol::rsetp(this, 0, false, p_property, p_value);
 }
 
 void Node::rset_id(int p_peer_id, const StringName &p_property, const Variant &p_value) {
 
-	rsetp(p_peer_id, false, p_property, p_value);
+	MultiplayerProtocol::rsetp(this, p_peer_id, false, p_property, p_value);
 }
 
 void Node::rset_unreliable(const StringName &p_property, const Variant &p_value) {
 
-	rsetp(0, true, p_property, p_value);
+	MultiplayerProtocol::rsetp(this, 0, true, p_property, p_value);
 }
 
 void Node::rset_unreliable_id(int p_peer_id, const StringName &p_property, const Variant &p_value) {
 
-	rsetp(p_peer_id, true, p_property, p_value);
+	MultiplayerProtocol::rsetp(this, p_peer_id, true, p_property, p_value);
 }
 
 //////////// end of rpc
+
+const Map<StringName, Node::RPCMode>::Element *Node::get_node_rpc_mode(const StringName &p_method) {
+	return data.rpc_methods.find(p_method);
+}
+
+const Map<StringName, Node::RPCMode>::Element *Node::get_node_rset_mode(const StringName &p_property) {
+	return data.rpc_properties.find(p_property);
+}
 
 bool Node::can_call_rpc(const StringName &p_method, int p_from) const {
 
