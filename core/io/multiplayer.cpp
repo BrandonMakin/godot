@@ -2,38 +2,38 @@
 #include "core/io/marshalls.h"
 #include "scene/main/node.h"
 
-void MultiplayerProtocol::network_poll(MultiplayerState &state) {
+void MultiplayerProtocol::poll() {
 
-	if (!state.peer.is_valid() || state.peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED)
+	if (!network_state.peer.is_valid() || network_state.peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED)
 		return;
 
-	state.peer->poll();
+	network_state.peer->poll();
 
-	if (!state.peer.is_valid()) //it's possible that polling might have resulted in a disconnection, so check here
+	if (!network_state.peer.is_valid()) //it's possible that polling might have resulted in a disconnection, so check here
 		return;
 
-	while (state.peer->get_available_packet_count()) {
+	while (network_state.peer->get_available_packet_count()) {
 
-		int sender = state.peer->get_packet_peer();
+		int sender = network_state.peer->get_packet_peer();
 		const uint8_t *packet;
 		int len;
 
-		Error err = state.peer->get_packet(&packet, len);
+		Error err = network_state.peer->get_packet(&packet, len);
 		if (err != OK) {
 			ERR_PRINT("Error getting packet!");
 		}
 
-		state.rpc_sender_id = sender;
-		_network_process_packet(state, sender, packet, len);
-		state.rpc_sender_id = 0;
+		network_state.rpc_sender_id = sender;
+		_network_process_packet(sender, packet, len);
+		network_state.rpc_sender_id = 0;
 
-		if (!state.peer.is_valid()) {
+		if (!network_state.peer.is_valid()) {
 			break; //it's also possible that a packet or RPC caused a disconnection, so also check here
 		}
 	}
 }
 
-void MultiplayerProtocol::_network_process_packet(MultiplayerState &state, int p_from, const uint8_t *p_packet, int p_packet_len) {
+void MultiplayerProtocol::_network_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
 	ERR_FAIL_COND(p_packet_len < 5);
 
@@ -60,7 +60,7 @@ void MultiplayerProtocol::_network_process_packet(MultiplayerState &state, int p
 
 				NodePath np = paths;
 
-				node = state.root->get_node(np);
+				node = network_state.root->get_node(np);
 				if (node == NULL) {
 					ERR_EXPLAIN("Failed to get path from RPC: " + String(np));
 					ERR_FAIL_COND(node == NULL);
@@ -69,7 +69,7 @@ void MultiplayerProtocol::_network_process_packet(MultiplayerState &state, int p
 				//use cached path
 				int id = target;
 
-				Map<int, PathGetCache>::Element *E = state.path_get_cache.find(p_from);
+				Map<int, PathGetCache>::Element *E = network_state.path_get_cache.find(p_from);
 				ERR_FAIL_COND(!E);
 
 				Map<int, PathGetCache::NodeInfo>::Element *F = E->get().nodes.find(id);
@@ -78,7 +78,7 @@ void MultiplayerProtocol::_network_process_packet(MultiplayerState &state, int p
 				PathGetCache::NodeInfo *ni = &F->get();
 				//do proper caching later
 
-				node = state.root->get_node(ni->path);
+				node = network_state.root->get_node(ni->path);
 				if (node == NULL) {
 					ERR_EXPLAIN("Failed to get cached path from RPC: " + String(ni->path));
 					ERR_FAIL_COND(node == NULL);
@@ -168,15 +168,15 @@ void MultiplayerProtocol::_network_process_packet(MultiplayerState &state, int p
 
 			NodePath path = paths;
 
-			if (!state.path_get_cache.has(p_from)) {
-				state.path_get_cache[p_from] = PathGetCache();
+			if (!network_state.path_get_cache.has(p_from)) {
+				network_state.path_get_cache[p_from] = PathGetCache();
 			}
 
 			PathGetCache::NodeInfo ni;
 			ni.path = path;
 			ni.instance = 0;
 
-			state.path_get_cache[p_from].nodes[id] = ni;
+			network_state.path_get_cache[p_from].nodes[id] = ni;
 
 			{
 				//send ack
@@ -191,9 +191,9 @@ void MultiplayerProtocol::_network_process_packet(MultiplayerState &state, int p
 				packet[0] = NETWORK_COMMAND_CONFIRM_PATH;
 				encode_cstring(pname.get_data(), &packet[1]);
 
-				state.peer->set_transfer_mode(NetworkedMultiplayerPeer::TRANSFER_MODE_RELIABLE);
-				state.peer->set_target_peer(p_from);
-				state.peer->put_packet(packet.ptr(), packet.size());
+				network_state.peer->set_transfer_mode(NetworkedMultiplayerPeer::TRANSFER_MODE_RELIABLE);
+				network_state.peer->set_target_peer(p_from);
+				network_state.peer->put_packet(packet.ptr(), packet.size());
 			}
 		} break;
 		case NETWORK_COMMAND_CONFIRM_PATH: {
@@ -203,7 +203,7 @@ void MultiplayerProtocol::_network_process_packet(MultiplayerState &state, int p
 
 			NodePath path = paths;
 
-			PathSentCache *psc = state.path_send_cache.getptr(path);
+			PathSentCache *psc = network_state.path_send_cache.getptr(path);
 			ERR_FAIL_COND(!psc);
 
 			Map<int, bool>::Element *E = psc->confirmed_peers.find(p_from);
@@ -394,14 +394,14 @@ void MultiplayerProtocol::rpc(Node *p_from, int p_to, bool p_unreliable, bool p_
 	}
 }
 
-void MultiplayerProtocol::_add_peer(MultiplayerState &state, int p_id) {
-	state.connected_peers.insert(p_id);
-	state.path_get_cache.insert(p_id, PathGetCache());
+void MultiplayerProtocol::add_peer(int p_id) {
+	network_state.connected_peers.insert(p_id);
+	network_state.path_get_cache.insert(p_id, PathGetCache());
 }
 
-void MultiplayerProtocol::_del_peer(MultiplayerState &state, int p_id) {
-	state.connected_peers.erase(p_id);
-	state.path_get_cache.erase(p_id); //I no longer need your cache, sorry
+void MultiplayerProtocol::del_peer(int p_id) {
+	network_state.connected_peers.erase(p_id);
+	network_state.path_get_cache.erase(p_id); //I no longer need your cache, sorry
 }
 
 bool _should_call_native(Node::RPCMode mode, bool is_master, bool &r_skip_rpc) {
