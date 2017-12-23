@@ -35,8 +35,7 @@ private:
 	Node *root_node;
 
 protected:
-	static void _bind_methods() {
-	}
+	static void _bind_methods();
 
 	void _process_packet(int p_from, const uint8_t *p_packet, int p_packet_len);
 	void _process_simplify_path(int p_from, const uint8_t *p_packet, int p_packet_len);
@@ -87,6 +86,11 @@ public:
 	bool has_network_peer() const { return network_peer.is_valid(); }
 	const Set<int> get_connected_peers() const { return connected_peers; }
 	int get_rpc_sender_id() const { return rpc_sender_id; }
+	int get_network_unique_id() const;
+	bool is_server() const;
+
+	MultiplayerAPI();
+	~MultiplayerAPI();
 };
 
 #endif // MULTIPLAYER_PROTOCOL_H
