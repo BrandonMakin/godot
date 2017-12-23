@@ -403,14 +403,13 @@ public:
 	void rpc_id(int p_peer_id, const StringName &p_method, VARIANT_ARG_LIST); //rpc call, honors RPCMode
 	void rpc_unreliable_id(int p_peer_id, const StringName &p_method, VARIANT_ARG_LIST); //rpc call, honors RPCMode
 
-	void rpcp(int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount);
-
 	void rset(const StringName &p_property, const Variant &p_value); //remote set call, honors RPCMode
 	void rset_unreliable(const StringName &p_property, const Variant &p_value); //remote set call, honors RPCMode
 	void rset_id(int p_peer_id, const StringName &p_property, const Variant &p_value); //remote set call, honors RPCMode
 	void rset_unreliable_id(int p_peer_id, const StringName &p_property, const Variant &p_value); //remote set call, honors RPCMode
 
-	void rsetp(int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value);
+	const Map<StringName, RPCMode>::Element *get_node_rpc_mode(const StringName &p_method);
+	const Map<StringName, RPCMode>::Element *get_node_rset_mode(const StringName &p_property);
 
 	bool can_call_rpc(const StringName &p_method, int p_from) const;
 	bool can_call_rset(const StringName &p_property, int p_from) const;

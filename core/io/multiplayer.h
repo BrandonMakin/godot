@@ -56,6 +56,9 @@ public:
 	static void _rpc(MultiplayerState &state, Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount);
 	static void add_peer(MultiplayerState &state, int p_id);
 	static void del_peer(MultiplayerState &state, int p_id);
+
+	static void rpcp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount);
+	static void rsetp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value);
 };
 
 #endif // MULTIPLAYER_PROTOCOL_H
