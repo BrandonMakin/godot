@@ -13,6 +13,9 @@ protected:
 	}
 
 	void _network_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len);
+	void _network_process_call(int p_from, const uint8_t *p_packet, int p_packet_len);
+	void _network_simplify_path(int p_from, const uint8_t *p_packet, int p_packet_len);
+	void _network_confirm_path(int p_from, const uint8_t *p_packet, int p_packet_len);
 
 public:
 	enum NetworkCommands {
