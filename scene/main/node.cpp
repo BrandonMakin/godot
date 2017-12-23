@@ -513,7 +513,7 @@ void Node::rpc(const StringName &p_method, VARIANT_ARG_DECLARE) {
 		argc++;
 	}
 
-	MultiplayerProtocol::rpcp(this, 0, false, p_method, argptr, argc);
+	rpcp(0, false, p_method, argptr, argc);
 }
 
 void Node::rpc_id(int p_peer_id, const StringName &p_method, VARIANT_ARG_DECLARE) {
@@ -527,7 +527,7 @@ void Node::rpc_id(int p_peer_id, const StringName &p_method, VARIANT_ARG_DECLARE
 		argc++;
 	}
 
-	MultiplayerProtocol::rpcp(this, p_peer_id, false, p_method, argptr, argc);
+	rpcp(p_peer_id, false, p_method, argptr, argc);
 }
 
 void Node::rpc_unreliable(const StringName &p_method, VARIANT_ARG_DECLARE) {
@@ -541,7 +541,7 @@ void Node::rpc_unreliable(const StringName &p_method, VARIANT_ARG_DECLARE) {
 		argc++;
 	}
 
-	MultiplayerProtocol::rpcp(this, 0, true, p_method, argptr, argc);
+	rpcp(0, true, p_method, argptr, argc);
 }
 
 void Node::rpc_unreliable_id(int p_peer_id, const StringName &p_method, VARIANT_ARG_DECLARE) {
@@ -555,7 +555,7 @@ void Node::rpc_unreliable_id(int p_peer_id, const StringName &p_method, VARIANT_
 		argc++;
 	}
 
-	MultiplayerProtocol::rpcp(this, p_peer_id, true, p_method, argptr, argc);
+	rpcp(p_peer_id, true, p_method, argptr, argc);
 }
 
 Variant Node::_rpc_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
@@ -575,7 +575,7 @@ Variant Node::_rpc_bind(const Variant **p_args, int p_argcount, Variant::CallErr
 
 	StringName method = *p_args[0];
 
-	MultiplayerProtocol::rpcp(this, 0, false, method, &p_args[1], p_argcount - 1);
+	rpcp(0, false, method, &p_args[1], p_argcount - 1);
 
 	r_error.error = Variant::CallError::CALL_OK;
 	return Variant();
@@ -606,7 +606,7 @@ Variant Node::_rpc_id_bind(const Variant **p_args, int p_argcount, Variant::Call
 	int peer_id = *p_args[0];
 	StringName method = *p_args[1];
 
-	MultiplayerProtocol::rpcp(this, peer_id, false, method, &p_args[2], p_argcount - 2);
+	rpcp(peer_id, false, method, &p_args[2], p_argcount - 2);
 
 	r_error.error = Variant::CallError::CALL_OK;
 	return Variant();
@@ -629,7 +629,7 @@ Variant Node::_rpc_unreliable_bind(const Variant **p_args, int p_argcount, Varia
 
 	StringName method = *p_args[0];
 
-	MultiplayerProtocol::rpcp(this, 0, true, method, &p_args[1], p_argcount - 1);
+	rpcp(0, true, method, &p_args[1], p_argcount - 1);
 
 	r_error.error = Variant::CallError::CALL_OK;
 	return Variant();
@@ -660,31 +660,39 @@ Variant Node::_rpc_unreliable_id_bind(const Variant **p_args, int p_argcount, Va
 	int peer_id = *p_args[0];
 	StringName method = *p_args[1];
 
-	MultiplayerProtocol::rpcp(this, peer_id, true, method, &p_args[2], p_argcount - 2);
+	rpcp(peer_id, true, method, &p_args[2], p_argcount - 2);
 
 	r_error.error = Variant::CallError::CALL_OK;
 	return Variant();
 }
 
+void Node::rpcp(int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount) {
+	get_tree()->get_multiplayer_protocol()->rpcp(this, p_peer_id, p_unreliable, p_method, p_arg, p_argcount);
+}
+
+void Node::rsetp(int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value) {
+	get_tree()->get_multiplayer_protocol()->rsetp(this, p_peer_id, p_unreliable, p_property, p_value);
+}
+
 /******** RSET *********/
 void Node::rset(const StringName &p_property, const Variant &p_value) {
 
-	MultiplayerProtocol::rsetp(this, 0, false, p_property, p_value);
+	rsetp(0, false, p_property, p_value);
 }
 
 void Node::rset_id(int p_peer_id, const StringName &p_property, const Variant &p_value) {
 
-	MultiplayerProtocol::rsetp(this, p_peer_id, false, p_property, p_value);
+	rsetp(p_peer_id, false, p_property, p_value);
 }
 
 void Node::rset_unreliable(const StringName &p_property, const Variant &p_value) {
 
-	MultiplayerProtocol::rsetp(this, 0, true, p_property, p_value);
+	rsetp(0, true, p_property, p_value);
 }
 
 void Node::rset_unreliable_id(int p_peer_id, const StringName &p_property, const Variant &p_value) {
 
-	MultiplayerProtocol::rsetp(this, p_peer_id, true, p_property, p_value);
+	rsetp(p_peer_id, true, p_property, p_value);
 }
 
 //////////// end of rpc

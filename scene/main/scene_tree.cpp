@@ -1656,6 +1656,10 @@ void SceneTree::_server_disconnected() {
 	emit_signal("server_disconnected");
 }
 
+Ref<MultiplayerProtocol> SceneTree::get_multiplayer_protocol() const {
+	return network_protocol;
+}
+
 void SceneTree::set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_network_peer) {
 	Ref<NetworkedMultiplayerPeer> peer = network_protocol->get_network_peer();
 	if (peer.is_valid()) {

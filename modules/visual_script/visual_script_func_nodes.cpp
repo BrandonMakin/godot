@@ -799,7 +799,7 @@ public:
 			reliable = false;
 		}
 
-		MultiplayerProtocol::rpcp(node, to_id, !reliable, function, p_args, p_argcount);
+		node->rpcp(to_id, !reliable, function, p_args, p_argcount);
 
 		return true;
 	}
