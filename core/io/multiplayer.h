@@ -80,10 +80,7 @@ public:
 
 	void rpcp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount);
 	void rsetp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value);
-
-	void rpc(Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount) {
-		_rpc(network_state, p_from, p_to, p_unreliable, p_set, p_name, p_arg, p_argcount);
-	}
+	void rpc(Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount);
 
 	void add_peer(int p_id) {
 		_add_peer(network_state, p_id);
@@ -111,7 +108,6 @@ public:
 
 	static void network_poll(MultiplayerState &state);
 	static void _network_process_packet(MultiplayerState &state, int p_from, const uint8_t *p_packet, int p_packet_len);
-	static void _rpc(MultiplayerState &state, Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount);
 	static void _add_peer(MultiplayerState &state, int p_id);
 	static void _del_peer(MultiplayerState &state, int p_id);
 };
