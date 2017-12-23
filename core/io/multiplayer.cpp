@@ -60,6 +60,7 @@ void MultiplayerProtocol::_network_process_packet(int p_from, const uint8_t *p_p
 void MultiplayerProtocol::_network_process_call(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
 	ERR_FAIL_COND(p_packet_len < 5);
+	ERR_FAIL_COND(root_node == NULL);
 
 	uint8_t packet_type = p_packet[0];
 	uint32_t target = decode_uint32(&p_packet[1]);
