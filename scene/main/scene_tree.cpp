@@ -1937,7 +1937,7 @@ SceneTree::SceneTree() {
 
 	// Initialize network state
 	network_protocol = Ref<MultiplayerProtocol>(memnew(MultiplayerProtocol));
-	network_protocol->set_root(root);
+	network_protocol->set_root_node(root);
 
 	//root->set_world_2d( Ref<World2D>( memnew( World2D )));
 	root->set_as_audio_listener(true);
