@@ -24,7 +24,7 @@ void MultiplayerProtocol::poll() {
 		}
 
 		rpc_sender_id = sender;
-		_network_process_packet(sender, packet, len);
+		_process_packet(sender, packet, len);
 		rpc_sender_id = 0;
 
 		if (!network_peer.is_valid()) {
@@ -33,7 +33,7 @@ void MultiplayerProtocol::poll() {
 	}
 }
 
-void MultiplayerProtocol::_network_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len) {
+void MultiplayerProtocol::_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
 	ERR_FAIL_COND(p_packet_len < 5);
 
@@ -43,12 +43,12 @@ void MultiplayerProtocol::_network_process_packet(int p_from, const uint8_t *p_p
 
 		case NETWORK_COMMAND_SIMPLIFY_PATH: {
 
-			_network_simplify_path(p_from, p_packet, p_packet_len);
+			_process_simplify_path(p_from, p_packet, p_packet_len);
 		} break;
 
 		case NETWORK_COMMAND_CONFIRM_PATH: {
 
-			_network_confirm_path(p_from, p_packet, p_packet_len);
+			_process_confirm_path(p_from, p_packet, p_packet_len);
 		} break;
 
 		case NETWORK_COMMAND_REMOTE_CALL:
@@ -57,7 +57,7 @@ void MultiplayerProtocol::_network_process_packet(int p_from, const uint8_t *p_p
 			ERR_FAIL_COND(p_packet_len < 6);
 			ERR_FAIL_COND(root_node == NULL);
 
-			Node *node = _network_get_node(p_from, p_packet, p_packet_len);
+			Node *node = _process_get_node(p_from, p_packet, p_packet_len);
 
 			ERR_FAIL_COND(node == NULL);
 
@@ -75,18 +75,18 @@ void MultiplayerProtocol::_network_process_packet(int p_from, const uint8_t *p_p
 
 			if (packet_type == NETWORK_COMMAND_REMOTE_CALL) {
 
-				_network_process_rpc(node, name, p_from, p_packet, p_packet_len, len_end + 1);
+				_process_rpc(node, name, p_from, p_packet, p_packet_len, len_end + 1);
 
 			} else {
 
-				_network_process_rset(node, name, p_from, p_packet, p_packet_len, len_end + 1);
+				_process_rset(node, name, p_from, p_packet, p_packet_len, len_end + 1);
 			}
 
 		} break;
 	}
 }
 
-Node *MultiplayerProtocol::_network_get_node(int p_from, const uint8_t *p_packet, int p_packet_len) {
+Node *MultiplayerProtocol::_process_get_node(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
 	uint32_t target = decode_uint32(&p_packet[1]);
 	Node *node = NULL;
@@ -126,7 +126,7 @@ Node *MultiplayerProtocol::_network_get_node(int p_from, const uint8_t *p_packet
 	return node;
 }
 
-void MultiplayerProtocol::_network_process_rpc(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
+void MultiplayerProtocol::_process_rpc(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
 	if (!p_node->can_call_rpc(p_name, p_from))
 		return;
 
@@ -161,7 +161,7 @@ void MultiplayerProtocol::_network_process_rpc(Node *p_node, const StringName &p
 	}
 }
 
-void MultiplayerProtocol::_network_process_rset(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
+void MultiplayerProtocol::_process_rset(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
 
 	if (!p_node->can_call_rset(p_name, p_from))
 		return;
@@ -180,7 +180,7 @@ void MultiplayerProtocol::_network_process_rset(Node *p_node, const StringName &
 	}
 }
 
-void MultiplayerProtocol::_network_simplify_path(int p_from, const uint8_t *p_packet, int p_packet_len) {
+void MultiplayerProtocol::_process_simplify_path(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
 	ERR_FAIL_COND(p_packet_len < 5);
 	int id = decode_uint32(&p_packet[1]);
@@ -217,7 +217,7 @@ void MultiplayerProtocol::_network_simplify_path(int p_from, const uint8_t *p_pa
 	network_peer->put_packet(packet.ptr(), packet.size());
 }
 
-void MultiplayerProtocol::_network_confirm_path(int p_from, const uint8_t *p_packet, int p_packet_len) {
+void MultiplayerProtocol::_process_confirm_path(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
 	String paths;
 	paths.parse_utf8((const char *)&p_packet[1], p_packet_len - 1);
@@ -232,7 +232,7 @@ void MultiplayerProtocol::_network_confirm_path(int p_from, const uint8_t *p_pac
 	E->get() = true;
 }
 
-bool MultiplayerProtocol::_network_send_confirm_path(NodePath p_path, PathSentCache *psc, int p_target) {
+bool MultiplayerProtocol::_send_confirm_path(NodePath p_path, PathSentCache *psc, int p_target) {
 	bool has_all_peers = true;
 	List<int> peers_to_add; //if one is missing, take note to add it
 
@@ -282,7 +282,7 @@ bool MultiplayerProtocol::_network_send_confirm_path(NodePath p_path, PathSentCa
 	return has_all_peers;
 }
 
-void MultiplayerProtocol::rpc(Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount) {
+void MultiplayerProtocol::_send_rpc(Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount) {
 
 	if (network_peer.is_null()) {
 		ERR_EXPLAIN("Attempt to remote call/set when networking is not active in SceneTree.");
@@ -373,7 +373,7 @@ void MultiplayerProtocol::rpc(Node *p_from, int p_to, bool p_unreliable, bool p_
 	}
 
 	//see if all peers have cached path (is so, call can be fast)
-	bool has_all_peers = _network_send_confirm_path(from_path, psc, p_to);
+	bool has_all_peers = _send_confirm_path(from_path, psc, p_to);
 
 	//take chance and set transfer mode, since all send methods will use it
 	network_peer->set_transfer_mode(p_unreliable ? NetworkedMultiplayerPeer::TRANSFER_MODE_UNRELIABLE : NetworkedMultiplayerPeer::TRANSFER_MODE_RELIABLE);
@@ -508,7 +508,7 @@ void MultiplayerProtocol::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, c
 	}
 
 	if (!skip_rpc) {
-		rpc(p_node, p_peer_id, p_unreliable, false, p_method, p_arg, p_argcount);
+		_send_rpc(p_node, p_peer_id, p_unreliable, false, p_method, p_arg, p_argcount);
 	}
 
 	if (call_local_native) {
@@ -588,5 +588,5 @@ void MultiplayerProtocol::rsetp(Node *p_node, int p_peer_id, bool p_unreliable, 
 
 	const Variant *vptr = &p_value;
 
-	rpc(p_node, p_peer_id, p_unreliable, true, p_property, &vptr, 1);
+	_send_rpc(p_node, p_peer_id, p_unreliable, true, p_property, &vptr, 1);
 }
