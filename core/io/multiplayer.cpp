@@ -41,37 +41,61 @@ void MultiplayerProtocol::_network_process_packet(int p_from, const uint8_t *p_p
 
 	switch (packet_type) {
 
-		case NETWORK_COMMAND_REMOTE_CALL:
-		case NETWORK_COMMAND_REMOTE_SET: {
-
-			_network_process_call(p_from, p_packet, p_packet_len);
-		} break;
 		case NETWORK_COMMAND_SIMPLIFY_PATH: {
 
 			_network_simplify_path(p_from, p_packet, p_packet_len);
 		} break;
+
 		case NETWORK_COMMAND_CONFIRM_PATH: {
 
 			_network_confirm_path(p_from, p_packet, p_packet_len);
 		} break;
+
+		case NETWORK_COMMAND_REMOTE_CALL:
+		case NETWORK_COMMAND_REMOTE_SET: {
+
+			ERR_FAIL_COND(p_packet_len < 6);
+			ERR_FAIL_COND(root_node == NULL);
+
+			Node *node = _network_get_node(p_from, p_packet, p_packet_len);
+
+			ERR_FAIL_COND(node == NULL);
+
+			//detect cstring end
+			int len_end = 5;
+			for (; len_end < p_packet_len; len_end++) {
+				if (p_packet[len_end] == 0) {
+					break;
+				}
+			}
+
+			ERR_FAIL_COND(len_end >= p_packet_len);
+
+			StringName name = String::utf8((const char *)&p_packet[5]);
+
+			if (packet_type == NETWORK_COMMAND_REMOTE_CALL) {
+
+				_network_process_rpc(node, name, p_from, p_packet, p_packet_len, len_end + 1);
+
+			} else {
+
+				_network_process_rset(node, name, p_from, p_packet, p_packet_len, len_end + 1);
+			}
+
+		} break;
 	}
 }
 
-void MultiplayerProtocol::_network_process_call(int p_from, const uint8_t *p_packet, int p_packet_len) {
+Node *MultiplayerProtocol::_network_get_node(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
-	ERR_FAIL_COND(p_packet_len < 5);
-	ERR_FAIL_COND(root_node == NULL);
-
-	uint8_t packet_type = p_packet[0];
 	uint32_t target = decode_uint32(&p_packet[1]);
-
 	Node *node = NULL;
 
 	if (target & 0x80000000) {
 		//use full path (not cached yet)
 
 		int ofs = target & 0x7FFFFFFF;
-		ERR_FAIL_COND(ofs >= p_packet_len);
+		ERR_FAIL_COND_V(ofs >= p_packet_len, NULL);
 
 		String paths;
 		paths.parse_utf8((const char *)&p_packet[ofs], p_packet_len - ofs);
@@ -79,100 +103,80 @@ void MultiplayerProtocol::_network_process_call(int p_from, const uint8_t *p_pac
 		NodePath np = paths;
 
 		node = root_node->get_node(np);
-		if (node == NULL) {
-			ERR_EXPLAIN("Failed to get path from RPC: " + String(np));
-			ERR_FAIL_COND(node == NULL);
-		}
+
+		if (!node)
+			ERR_PRINTS("Failed to get path from RPC: " + String(np));
 	} else {
 		//use cached path
 		int id = target;
 
 		Map<int, PathGetCache>::Element *E = path_get_cache.find(p_from);
-		ERR_FAIL_COND(!E);
+		ERR_FAIL_COND_V(!E, NULL);
 
 		Map<int, PathGetCache::NodeInfo>::Element *F = E->get().nodes.find(id);
-		ERR_FAIL_COND(!F);
+		ERR_FAIL_COND_V(!F, NULL);
 
 		PathGetCache::NodeInfo *ni = &F->get();
 		//do proper caching later
 
 		node = root_node->get_node(ni->path);
-		if (node == NULL) {
-			ERR_EXPLAIN("Failed to get cached path from RPC: " + String(ni->path));
-			ERR_FAIL_COND(node == NULL);
-		}
+		if (!node)
+			ERR_PRINTS("Failed to get cached path from RPC: " + String(ni->path));
+	}
+	return node;
+}
+
+void MultiplayerProtocol::_network_process_rpc(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
+	if (!p_node->can_call_rpc(p_name, p_from))
+		return;
+
+	ERR_FAIL_COND(p_offset >= p_packet_len);
+
+	int argc = p_packet[p_offset];
+	Vector<Variant> args;
+	Vector<const Variant *> argp;
+	args.resize(argc);
+	argp.resize(argc);
+
+	p_offset++;
+
+	for (int i = 0; i < argc; i++) {
+
+		ERR_FAIL_COND(p_offset >= p_packet_len);
+		int vlen;
+		Error err = decode_variant(args[i], &p_packet[p_offset], p_packet_len - p_offset, &vlen);
+		ERR_FAIL_COND(err != OK);
+		//args[i]=p_packet[3+i];
+		argp[i] = &args[i];
+		p_offset += vlen;
 	}
 
-	ERR_FAIL_COND(p_packet_len < 6);
+	Variant::CallError ce;
 
-	//detect cstring end
-	int len_end = 5;
-	for (; len_end < p_packet_len; len_end++) {
-		if (p_packet[len_end] == 0) {
-			break;
-		}
+	p_node->call(p_name, (const Variant **)argp.ptr(), argc, ce);
+	if (ce.error != Variant::CallError::CALL_OK) {
+		String error = Variant::get_call_error_text(p_node, p_name, (const Variant **)argp.ptr(), argc, ce);
+		error = "RPC - " + error;
+		ERR_PRINTS(error);
 	}
+}
 
-	ERR_FAIL_COND(len_end >= p_packet_len);
+void MultiplayerProtocol::_network_process_rset(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
 
-	StringName name = String::utf8((const char *)&p_packet[5]);
+	if (!p_node->can_call_rset(p_name, p_from))
+		return;
 
-	if (packet_type == NETWORK_COMMAND_REMOTE_CALL) {
+	ERR_FAIL_COND(p_offset >= p_packet_len);
 
-		if (!node->can_call_rpc(name, p_from))
-			return;
+	Variant value;
+	decode_variant(value, &p_packet[p_offset], p_packet_len - p_offset);
 
-		int ofs = len_end + 1;
+	bool valid;
 
-		ERR_FAIL_COND(ofs >= p_packet_len);
-
-		int argc = p_packet[ofs];
-		Vector<Variant> args;
-		Vector<const Variant *> argp;
-		args.resize(argc);
-		argp.resize(argc);
-
-		ofs++;
-
-		for (int i = 0; i < argc; i++) {
-
-			ERR_FAIL_COND(ofs >= p_packet_len);
-			int vlen;
-			Error err = decode_variant(args[i], &p_packet[ofs], p_packet_len - ofs, &vlen);
-			ERR_FAIL_COND(err != OK);
-			//args[i]=p_packet[3+i];
-			argp[i] = &args[i];
-			ofs += vlen;
-		}
-
-		Variant::CallError ce;
-
-		node->call(name, (const Variant **)argp.ptr(), argc, ce);
-		if (ce.error != Variant::CallError::CALL_OK) {
-			String error = Variant::get_call_error_text(node, name, (const Variant **)argp.ptr(), argc, ce);
-			error = "RPC - " + error;
-			ERR_PRINTS(error);
-		}
-
-	} else {
-
-		if (!node->can_call_rset(name, p_from))
-			return;
-
-		int ofs = len_end + 1;
-
-		ERR_FAIL_COND(ofs >= p_packet_len);
-
-		Variant value;
-		decode_variant(value, &p_packet[ofs], p_packet_len - ofs);
-
-		bool valid;
-
-		node->set(name, value, &valid);
-		if (!valid) {
-			String error = "Error setting remote property '" + String(name) + "', not found in object of type " + node->get_class();
-			ERR_PRINTS(error);
-		}
+	p_node->set(p_name, value, &valid);
+	if (!valid) {
+		String error = "Error setting remote property '" + String(p_name) + "', not found in object of type " + p_node->get_class();
+		ERR_PRINTS(error);
 	}
 }
 
@@ -196,23 +200,21 @@ void MultiplayerProtocol::_network_simplify_path(int p_from, const uint8_t *p_pa
 
 	path_get_cache[p_from].nodes[id] = ni;
 
-	{
-		//send ack
+	//send ack
 
-		//encode path
-		CharString pname = String(path).utf8();
-		int len = encode_cstring(pname.get_data(), NULL);
+	//encode path
+	CharString pname = String(path).utf8();
+	int len = encode_cstring(pname.get_data(), NULL);
 
-		Vector<uint8_t> packet;
+	Vector<uint8_t> packet;
 
-		packet.resize(1 + len);
-		packet[0] = NETWORK_COMMAND_CONFIRM_PATH;
-		encode_cstring(pname.get_data(), &packet[1]);
+	packet.resize(1 + len);
+	packet[0] = NETWORK_COMMAND_CONFIRM_PATH;
+	encode_cstring(pname.get_data(), &packet[1]);
 
-		network_peer->set_transfer_mode(NetworkedMultiplayerPeer::TRANSFER_MODE_RELIABLE);
-		network_peer->set_target_peer(p_from);
-		network_peer->put_packet(packet.ptr(), packet.size());
-	}
+	network_peer->set_transfer_mode(NetworkedMultiplayerPeer::TRANSFER_MODE_RELIABLE);
+	network_peer->set_target_peer(p_from);
+	network_peer->put_packet(packet.ptr(), packet.size());
 }
 
 void MultiplayerProtocol::_network_confirm_path(int p_from, const uint8_t *p_packet, int p_packet_len) {
