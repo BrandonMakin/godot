@@ -458,8 +458,9 @@ bool _should_call_script(ScriptInstance::RPCMode mode, bool is_master, bool &r_s
 void MultiplayerProtocol::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount) {
 
 	ERR_FAIL_COND(!p_node->is_inside_tree());
+	ERR_FAIL_COND(!network_state.peer.is_valid());
 
-	int node_id = p_node->get_tree()->get_network_unique_id();
+	int node_id = network_state.peer->get_unique_id();
 	bool skip_rpc = false;
 	bool call_local_native = false;
 	bool call_local_script = false;
@@ -483,7 +484,7 @@ void MultiplayerProtocol::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, c
 	}
 
 	if (!skip_rpc) {
-		p_node->get_tree()->_rpc(p_node, p_peer_id, p_unreliable, false, p_method, p_arg, p_argcount);
+		rpc(p_node, p_peer_id, p_unreliable, false, p_method, p_arg, p_argcount);
 	}
 
 	if (call_local_native) {
@@ -513,8 +514,9 @@ void MultiplayerProtocol::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, c
 void MultiplayerProtocol::rsetp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value) {
 
 	ERR_FAIL_COND(!p_node->is_inside_tree());
+	ERR_FAIL_COND(!network_state.peer.is_valid());
 
-	int node_id = p_node->get_tree()->get_network_unique_id();
+	int node_id = network_state.peer->get_unique_id();
 	bool is_master = p_node->is_network_master();
 	bool skip_rset = false;
 
@@ -562,5 +564,5 @@ void MultiplayerProtocol::rsetp(Node *p_node, int p_peer_id, bool p_unreliable, 
 
 	const Variant *vptr = &p_value;
 
-	p_node->get_tree()->_rpc(p_node, p_peer_id, p_unreliable, true, p_property, &vptr, 1);
+	rpc(p_node, p_peer_id, p_unreliable, true, p_property, &vptr, 1);
 }
