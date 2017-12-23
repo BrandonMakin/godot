@@ -184,7 +184,7 @@ private:
 
 	///network///
 
-	MultiplayerProtocol::MultiplayerState network_state;
+	Ref<MultiplayerProtocol> network_protocol;
 
 	void _network_peer_connected(int p_id);
 	void _network_peer_disconnected(int p_id);
@@ -413,7 +413,7 @@ public:
 	//network API
 
 	void _rpc(Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount) {
-		MultiplayerProtocol::_rpc(network_state, p_from, p_to, p_unreliable, p_set, p_name, p_arg, p_argcount);
+		network_protocol->rpc(p_from, p_to, p_unreliable, p_set, p_name, p_arg, p_argcount);
 	}
 	void set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_network_peer);
 	bool is_network_server() const;
