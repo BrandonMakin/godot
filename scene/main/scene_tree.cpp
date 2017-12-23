@@ -1688,8 +1688,7 @@ void SceneTree::set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_network_
 
 bool SceneTree::is_network_server() const {
 
-	ERR_FAIL_COND_V(!multiplayer_api->has_network_peer(), false);
-	return multiplayer_api->get_network_peer()->is_server();
+	return multiplayer_api->is_server();
 }
 
 bool SceneTree::has_network_peer() const {
@@ -1698,8 +1697,7 @@ bool SceneTree::has_network_peer() const {
 
 int SceneTree::get_network_unique_id() const {
 
-	ERR_FAIL_COND_V(!multiplayer_api->has_network_peer(), 0);
-	return multiplayer_api->get_network_peer()->get_unique_id();
+	return multiplayer_api->get_network_unique_id();
 }
 
 Vector<int> SceneTree::get_network_connected_peers() const {

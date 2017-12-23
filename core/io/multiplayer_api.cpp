@@ -314,7 +314,7 @@ void MultiplayerAPI::_send_rpc(Node *p_from, int p_to, bool p_unreliable, bool p
 		ERR_FAIL();
 	}
 
-	NodePath from_path = p_from->get_path();
+	NodePath from_path = (root_node->get_path()).rel_path_to(p_from->get_path());
 	ERR_FAIL_COND(from_path.is_empty());
 
 	//see if the path is cached
@@ -589,4 +589,37 @@ void MultiplayerAPI::rsetp(Node *p_node, int p_peer_id, bool p_unreliable, const
 	const Variant *vptr = &p_value;
 
 	_send_rpc(p_node, p_peer_id, p_unreliable, true, p_property, &vptr, 1);
+}
+
+int MultiplayerAPI::get_network_unique_id() const {
+
+	ERR_FAIL_COND_V(!network_peer.is_valid(), 0);
+	return network_peer->get_unique_id();
+}
+
+bool MultiplayerAPI::is_server() const {
+
+	ERR_FAIL_COND_V(!network_peer.is_valid(), false);
+	return network_peer->is_server();
+}
+
+void MultiplayerAPI::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_root_node", "node"), &MultiplayerAPI::set_root_node);
+	ClassDB::bind_method(D_METHOD("has_network_peer"), &MultiplayerAPI::has_network_peer);
+	ClassDB::bind_method(D_METHOD("get_network_peer"), &MultiplayerAPI::get_network_peer);
+	ClassDB::bind_method(D_METHOD("get_network_unique_id"), &MultiplayerAPI::get_network_unique_id);
+	ClassDB::bind_method(D_METHOD("is_server"), &MultiplayerAPI::is_server);
+	ClassDB::bind_method(D_METHOD("get_rpc_sender_id"), &MultiplayerAPI::get_rpc_sender_id);
+	ClassDB::bind_method(D_METHOD("add_peer", "id"), &MultiplayerAPI::add_peer);
+	ClassDB::bind_method(D_METHOD("del_peer", "id"), &MultiplayerAPI::del_peer);
+	ClassDB::bind_method(D_METHOD("set_network_peer", "peer"), &MultiplayerAPI::set_network_peer);
+	ClassDB::bind_method(D_METHOD("poll"), &MultiplayerAPI::poll);
+	ClassDB::bind_method(D_METHOD("clear"), &MultiplayerAPI::clear);
+}
+
+MultiplayerAPI::MultiplayerAPI() {
+}
+
+MultiplayerAPI::~MultiplayerAPI() {
+	clear();
 }

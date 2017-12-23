@@ -473,7 +473,7 @@ bool Node::is_network_master() const {
 
 	ERR_FAIL_COND_V(!is_inside_tree(), false);
 
-	return get_tree()->get_network_unique_id() == data.network_master;
+	return get_multiplayer_api()->get_network_unique_id() == data.network_master;
 }
 
 /***** RPC CONFIG ********/
@@ -663,11 +663,11 @@ Variant Node::_rpc_unreliable_id_bind(const Variant **p_args, int p_argcount, Va
 }
 
 void Node::rpcp(int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount) {
-	get_tree()->get_multiplayer_api()->rpcp(this, p_peer_id, p_unreliable, p_method, p_arg, p_argcount);
+	get_multiplayer_api()->rpcp(this, p_peer_id, p_unreliable, p_method, p_arg, p_argcount);
 }
 
 void Node::rsetp(int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value) {
-	get_tree()->get_multiplayer_api()->rsetp(this, p_peer_id, p_unreliable, p_property, p_value);
+	get_multiplayer_api()->rsetp(this, p_peer_id, p_unreliable, p_property, p_value);
 }
 
 /******** RSET *********/
@@ -692,6 +692,15 @@ void Node::rset_unreliable_id(int p_peer_id, const StringName &p_property, const
 }
 
 //////////// end of rpc
+Ref<MultiplayerAPI> Node::get_multiplayer_api() const {
+	if (multiplayer_api.is_valid())
+		return multiplayer_api;
+	return get_tree()->get_multiplayer_api();
+}
+void Node::set_custom_multiplayer_api(Ref<MultiplayerAPI> p_multiplayer_api) {
+
+	multiplayer_api = p_multiplayer_api;
+}
 
 const Map<StringName, Node::RPCMode>::Element *Node::get_node_rpc_mode(const StringName &p_method) {
 	return data.rpc_methods.find(p_method);
@@ -2695,6 +2704,8 @@ void Node::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("is_network_master"), &Node::is_network_master);
 
+	ClassDB::bind_method(D_METHOD("get_multiplayer_api"), &Node::get_multiplayer_api);
+	ClassDB::bind_method(D_METHOD("set_custom_multiplayer_api", "protocol"), &Node::set_custom_multiplayer_api);
 	ClassDB::bind_method(D_METHOD("rpc_config", "method", "mode"), &Node::rpc_config);
 	ClassDB::bind_method(D_METHOD("rset_config", "property", "mode"), &Node::rset_config);
 
