@@ -1,8 +1,8 @@
-#include "core/io/multiplayer.h"
+#include "core/io/multiplayer_api.h"
 #include "core/io/marshalls.h"
 #include "scene/main/node.h"
 
-void MultiplayerProtocol::poll() {
+void MultiplayerAPI::poll() {
 
 	if (!network_peer.is_valid() || network_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED)
 		return;
@@ -33,7 +33,7 @@ void MultiplayerProtocol::poll() {
 	}
 }
 
-void MultiplayerProtocol::_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len) {
+void MultiplayerAPI::_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
 	ERR_FAIL_COND(p_packet_len < 5);
 
@@ -86,7 +86,7 @@ void MultiplayerProtocol::_process_packet(int p_from, const uint8_t *p_packet, i
 	}
 }
 
-Node *MultiplayerProtocol::_process_get_node(int p_from, const uint8_t *p_packet, int p_packet_len) {
+Node *MultiplayerAPI::_process_get_node(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
 	uint32_t target = decode_uint32(&p_packet[1]);
 	Node *node = NULL;
@@ -126,7 +126,7 @@ Node *MultiplayerProtocol::_process_get_node(int p_from, const uint8_t *p_packet
 	return node;
 }
 
-void MultiplayerProtocol::_process_rpc(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
+void MultiplayerAPI::_process_rpc(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
 	if (!p_node->can_call_rpc(p_name, p_from))
 		return;
 
@@ -161,7 +161,7 @@ void MultiplayerProtocol::_process_rpc(Node *p_node, const StringName &p_name, i
 	}
 }
 
-void MultiplayerProtocol::_process_rset(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
+void MultiplayerAPI::_process_rset(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
 
 	if (!p_node->can_call_rset(p_name, p_from))
 		return;
@@ -180,7 +180,7 @@ void MultiplayerProtocol::_process_rset(Node *p_node, const StringName &p_name, 
 	}
 }
 
-void MultiplayerProtocol::_process_simplify_path(int p_from, const uint8_t *p_packet, int p_packet_len) {
+void MultiplayerAPI::_process_simplify_path(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
 	ERR_FAIL_COND(p_packet_len < 5);
 	int id = decode_uint32(&p_packet[1]);
@@ -217,7 +217,7 @@ void MultiplayerProtocol::_process_simplify_path(int p_from, const uint8_t *p_pa
 	network_peer->put_packet(packet.ptr(), packet.size());
 }
 
-void MultiplayerProtocol::_process_confirm_path(int p_from, const uint8_t *p_packet, int p_packet_len) {
+void MultiplayerAPI::_process_confirm_path(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
 	String paths;
 	paths.parse_utf8((const char *)&p_packet[1], p_packet_len - 1);
@@ -232,7 +232,7 @@ void MultiplayerProtocol::_process_confirm_path(int p_from, const uint8_t *p_pac
 	E->get() = true;
 }
 
-bool MultiplayerProtocol::_send_confirm_path(NodePath p_path, PathSentCache *psc, int p_target) {
+bool MultiplayerAPI::_send_confirm_path(NodePath p_path, PathSentCache *psc, int p_target) {
 	bool has_all_peers = true;
 	List<int> peers_to_add; //if one is missing, take note to add it
 
@@ -282,7 +282,7 @@ bool MultiplayerProtocol::_send_confirm_path(NodePath p_path, PathSentCache *psc
 	return has_all_peers;
 }
 
-void MultiplayerProtocol::_send_rpc(Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount) {
+void MultiplayerAPI::_send_rpc(Node *p_from, int p_to, bool p_unreliable, bool p_set, const StringName &p_name, const Variant **p_arg, int p_argcount) {
 
 	if (network_peer.is_null()) {
 		ERR_EXPLAIN("Attempt to remote call/set when networking is not active in SceneTree.");
@@ -418,12 +418,12 @@ void MultiplayerProtocol::_send_rpc(Node *p_from, int p_to, bool p_unreliable, b
 	}
 }
 
-void MultiplayerProtocol::add_peer(int p_id) {
+void MultiplayerAPI::add_peer(int p_id) {
 	connected_peers.insert(p_id);
 	path_get_cache.insert(p_id, PathGetCache());
 }
 
-void MultiplayerProtocol::del_peer(int p_id) {
+void MultiplayerAPI::del_peer(int p_id) {
 	connected_peers.erase(p_id);
 	path_get_cache.erase(p_id); //I no longer need your cache, sorry
 }
@@ -479,7 +479,7 @@ bool _should_call_script(ScriptInstance::RPCMode mode, bool is_master, bool &r_s
 	return false;
 }
 
-void MultiplayerProtocol::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount) {
+void MultiplayerAPI::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount) {
 
 	ERR_FAIL_COND(!p_node->is_inside_tree());
 	ERR_FAIL_COND(!network_peer.is_valid());
@@ -535,7 +535,7 @@ void MultiplayerProtocol::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, c
 	}
 }
 
-void MultiplayerProtocol::rsetp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value) {
+void MultiplayerAPI::rsetp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value) {
 
 	ERR_FAIL_COND(!p_node->is_inside_tree());
 	ERR_FAIL_COND(!network_peer.is_valid());

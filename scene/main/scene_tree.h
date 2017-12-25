@@ -30,7 +30,7 @@
 #ifndef SCENE_MAIN_LOOP_H
 #define SCENE_MAIN_LOOP_H
 
-#include "io/multiplayer.h"
+#include "io/multiplayer_api.h"
 #include "os/main_loop.h"
 #include "os/thread_safe.h"
 #include "scene/resources/mesh.h"
@@ -184,7 +184,7 @@ private:
 
 	///network///
 
-	Ref<MultiplayerProtocol> network_protocol;
+	Ref<MultiplayerAPI> multiplayer_api;
 
 	void _network_peer_connected(int p_id);
 	void _network_peer_disconnected(int p_id);
@@ -412,7 +412,7 @@ public:
 
 	//network API
 
-	Ref<MultiplayerProtocol> get_multiplayer_protocol() const;
+	Ref<MultiplayerAPI> get_multiplayer_api() const;
 	void set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_network_peer);
 	bool is_network_server() const;
 	bool has_network_peer() const;
