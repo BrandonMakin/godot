@@ -667,11 +667,11 @@ Variant Node::_rpc_unreliable_id_bind(const Variant **p_args, int p_argcount, Va
 }
 
 void Node::rpcp(int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount) {
-	get_tree()->get_multiplayer_protocol()->rpcp(this, p_peer_id, p_unreliable, p_method, p_arg, p_argcount);
+	get_tree()->get_multiplayer_api()->rpcp(this, p_peer_id, p_unreliable, p_method, p_arg, p_argcount);
 }
 
 void Node::rsetp(int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value) {
-	get_tree()->get_multiplayer_protocol()->rsetp(this, p_peer_id, p_unreliable, p_property, p_value);
+	get_tree()->get_multiplayer_api()->rsetp(this, p_peer_id, p_unreliable, p_property, p_value);
 }
 
 /******** RSET *********/

@@ -4,9 +4,9 @@
 #include "core/io/networked_multiplayer_peer.h"
 #include "core/reference.h"
 
-class MultiplayerProtocol : public Reference {
+class MultiplayerAPI : public Reference {
 
-	GDCLASS(MultiplayerProtocol, Reference);
+	GDCLASS(MultiplayerAPI, Reference);
 
 private:
 	//path sent caches
