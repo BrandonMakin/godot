@@ -223,6 +223,14 @@ changes are marked with `// -- GODOT --` comments.
 - Version: 2.4.1
 - License: LGPLv2.1 + static linking exception
 
+File extracted from upstream source:
+- Everything in `lib/` except `mbedtls_wrapper/`, `http2/`, `event-libs/`.
+  - From `misc/` exclude `lws-genhash.c`, `lws-ring.c`, `romfs.{c,h}`, `smtp.c`.
+  - From `plat/` exclude `lws-plat-{esp*,optee}.c`.
+  - From `server/` exclude `access-log.c`, `cgi.c`, `daemonize.c`, `lws-spa.c`, 
+`peer-limits.c`, `rewrite.c`
+- Also copy `win32helpers/` from `win32port/`
+
 Important: `lws_config.h` and `lws_config_private.h` contains custom 
 Godot build configurations, check them out when updating.
 
