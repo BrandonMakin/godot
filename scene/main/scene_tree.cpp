@@ -1631,13 +1631,11 @@ Ref<SceneTreeTimer> SceneTree::create_timer(float p_delay_sec, bool p_process_pa
 
 void SceneTree::_network_peer_connected(int p_id) {
 
-	multiplayer_api->add_peer(p_id);
 	emit_signal("network_peer_connected", p_id);
 }
 
 void SceneTree::_network_peer_disconnected(int p_id) {
 
-	multiplayer_api->del_peer(p_id);
 	emit_signal("network_peer_disconnected", p_id);
 }
 
@@ -1661,30 +1659,8 @@ Ref<MultiplayerAPI> SceneTree::get_multiplayer_api() const {
 }
 
 void SceneTree::set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_network_peer) {
-	Ref<NetworkedMultiplayerPeer> peer = multiplayer_api->get_network_peer();
-	if (peer.is_valid()) {
-		peer = multiplayer_api->get_network_peer();
-		peer->disconnect("peer_connected", this, "_network_peer_connected");
-		peer->disconnect("peer_disconnected", this, "_network_peer_disconnected");
-		peer->disconnect("connection_succeeded", this, "_connected_to_server");
-		peer->disconnect("connection_failed", this, "_connection_failed");
-		peer->disconnect("server_disconnected", this, "_server_disconnected");
-		multiplayer_api->clear();
-	}
 
-	peer = p_network_peer;
-	multiplayer_api->set_network_peer(peer);
-
-	ERR_EXPLAIN("Supplied NetworkedNetworkPeer must be connecting or connected.");
-	ERR_FAIL_COND(p_network_peer.is_valid() && p_network_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED);
-
-	if (peer.is_valid()) {
-		peer->connect("peer_connected", this, "_network_peer_connected");
-		peer->connect("peer_disconnected", this, "_network_peer_disconnected");
-		peer->connect("connection_succeeded", this, "_connected_to_server");
-		peer->connect("connection_failed", this, "_connection_failed");
-		peer->connect("server_disconnected", this, "_server_disconnected");
-	}
+	multiplayer_api->set_network_peer(p_network_peer);
 }
 
 Ref<NetworkedMultiplayerPeer> SceneTree::get_network_peer() const {
@@ -1694,7 +1670,7 @@ Ref<NetworkedMultiplayerPeer> SceneTree::get_network_peer() const {
 
 bool SceneTree::is_network_server() const {
 
-	return multiplayer_api->is_server();
+	return multiplayer_api->is_network_server();
 }
 
 bool SceneTree::has_network_peer() const {
@@ -1936,6 +1912,11 @@ SceneTree::SceneTree() {
 	// Initialize network state
 	multiplayer_api = Ref<MultiplayerAPI>(memnew(MultiplayerAPI));
 	multiplayer_api->set_root_node(root);
+	multiplayer_api->connect("network_peer_connected", this, "_network_peer_connected");
+	multiplayer_api->connect("network_peer_disconnected", this, "_network_peer_disconnected");
+	multiplayer_api->connect("connected_to_server", this, "_connected_to_server");
+	multiplayer_api->connect("connection_failed", this, "_connection_failed");
+	multiplayer_api->connect("server_disconnected", this, "_server_disconnected");
 
 	//root->set_world_2d( Ref<World2D>( memnew( World2D )));
 	root->set_as_audio_listener(true);

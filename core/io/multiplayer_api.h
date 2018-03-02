@@ -55,26 +55,12 @@ public:
 		NETWORK_COMMAND_CONFIRM_PATH,
 	};
 
-	void clear() {
-		connected_peers.clear();
-		path_get_cache.clear();
-		path_send_cache.clear();
-		last_send_cache_id = 1;
-	}
-
-	void set_root_node(Node *p_node) {
-		root_node = p_node;
-	}
-
-	void set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_peer) {
-		network_peer = p_peer;
-	}
-
-	Ref<NetworkedMultiplayerPeer> get_network_peer() const {
-		return network_peer;
-	}
-
 	void poll();
+	void clear();
+	void set_root_node(Node *p_node);
+	void set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_peer);
+	Ref<NetworkedMultiplayerPeer> get_network_peer() const;
+
 	// Called by Node.rpc
 	void rpcp(Node *p_node, int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount);
 	// Called by Node.rset
@@ -82,12 +68,15 @@ public:
 
 	void add_peer(int p_id);
 	void del_peer(int p_id);
+	void connected_to_server();
+	void connection_failed();
+	void server_disconnected();
 
 	bool has_network_peer() const { return network_peer.is_valid(); }
 	const Set<int> get_connected_peers() const { return connected_peers; }
 	int get_rpc_sender_id() const { return rpc_sender_id; }
 	int get_network_unique_id() const;
-	bool is_server() const;
+	bool is_network_server() const;
 
 	MultiplayerAPI();
 	~MultiplayerAPI();
