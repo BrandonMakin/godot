@@ -414,6 +414,7 @@ public:
 	void rsetp(int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value);
 
 	Ref<MultiplayerAPI> get_multiplayer_api() const;
+	Ref<MultiplayerAPI> get_custom_multiplayer_api() const;
 	void set_custom_multiplayer_api(Ref<MultiplayerAPI> p_multiplayer_api);
 	const Map<StringName, RPCMode>::Element *get_node_rpc_mode(const StringName &p_method);
 	const Map<StringName, RPCMode>::Element *get_node_rset_mode(const StringName &p_property);
