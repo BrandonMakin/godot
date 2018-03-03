@@ -1660,8 +1660,23 @@ Ref<MultiplayerAPI> SceneTree::get_multiplayer_api() const {
 
 void SceneTree::set_multiplayer_api(Ref<MultiplayerAPI> p_multiplayer_api) {
 	ERR_FAIL_COND(!p_multiplayer_api.is_valid());
+
+	if (multiplayer_api.is_valid()) {
+		multiplayer_api->disconnect("network_peer_connected", this, "_network_peer_connected");
+		multiplayer_api->disconnect("network_peer_disconnected", this, "_network_peer_disconnected");
+		multiplayer_api->disconnect("connected_to_server", this, "_connected_to_server");
+		multiplayer_api->disconnect("connection_failed", this, "_connection_failed");
+		multiplayer_api->disconnect("server_disconnected", this, "_server_disconnected");
+	}
+
 	multiplayer_api = p_multiplayer_api;
 	multiplayer_api->set_root_node(root);
+
+	multiplayer_api->connect("network_peer_connected", this, "_network_peer_connected");
+	multiplayer_api->connect("network_peer_disconnected", this, "_network_peer_disconnected");
+	multiplayer_api->connect("connected_to_server", this, "_connected_to_server");
+	multiplayer_api->connect("connection_failed", this, "_connection_failed");
+	multiplayer_api->connect("server_disconnected", this, "_server_disconnected");
 }
 
 void SceneTree::set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_network_peer) {
@@ -1909,13 +1924,7 @@ SceneTree::SceneTree() {
 		root->set_world(Ref<World>(memnew(World)));
 
 	// Initialize network state
-	multiplayer_api = Ref<MultiplayerAPI>(memnew(MultiplayerAPI));
-	multiplayer_api->set_root_node(root);
-	multiplayer_api->connect("network_peer_connected", this, "_network_peer_connected");
-	multiplayer_api->connect("network_peer_disconnected", this, "_network_peer_disconnected");
-	multiplayer_api->connect("connected_to_server", this, "_connected_to_server");
-	multiplayer_api->connect("connection_failed", this, "_connection_failed");
-	multiplayer_api->connect("server_disconnected", this, "_server_disconnected");
+	set_multiplayer_api(Ref<MultiplayerAPI>(memnew(MultiplayerAPI)));
 
 	//root->set_world_2d( Ref<World2D>( memnew( World2D )));
 	root->set_as_audio_listener(true);
