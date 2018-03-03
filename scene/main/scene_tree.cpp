@@ -1658,6 +1658,12 @@ Ref<MultiplayerAPI> SceneTree::get_multiplayer_api() const {
 	return multiplayer_api;
 }
 
+void SceneTree::set_multiplayer_api(Ref<MultiplayerAPI> p_multiplayer_api) {
+	ERR_FAIL_COND(!p_multiplayer_api.is_valid());
+	multiplayer_api = p_multiplayer_api;
+	multiplayer_api->set_root_node(root);
+}
+
 void SceneTree::set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_network_peer) {
 
 	multiplayer_api->set_network_peer(p_network_peer);
@@ -1777,6 +1783,8 @@ void SceneTree::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_change_scene"), &SceneTree::_change_scene);
 
+	ClassDB::bind_method(D_METHOD("set_multiplayer_api", "multiplayer_api"), &SceneTree::set_multiplayer_api);
+	ClassDB::bind_method(D_METHOD("get_multiplayer_api"), &SceneTree::get_multiplayer_api);
 	ClassDB::bind_method(D_METHOD("set_network_peer", "peer"), &SceneTree::set_network_peer);
 	ClassDB::bind_method(D_METHOD("get_network_peer"), &SceneTree::get_network_peer);
 	ClassDB::bind_method(D_METHOD("is_network_server"), &SceneTree::is_network_server);
@@ -1806,6 +1814,7 @@ void SceneTree::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "current_scene", PROPERTY_HINT_RESOURCE_TYPE, "Node", 0), "set_current_scene", "get_current_scene");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "network_peer", PROPERTY_HINT_RESOURCE_TYPE, "NetworkedMultiplayerPeer", 0), "set_network_peer", "get_network_peer");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "root", PROPERTY_HINT_RESOURCE_TYPE, "Node", 0), "", "get_root");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "multiplayer_api", PROPERTY_HINT_RESOURCE_TYPE, "MultiplayerAPI", 0), "set_multiplayer_api", "get_multiplayer_api");
 
 	ADD_SIGNAL(MethodInfo("tree_changed"));
 	ADD_SIGNAL(MethodInfo("node_added", PropertyInfo(Variant::OBJECT, "node")));

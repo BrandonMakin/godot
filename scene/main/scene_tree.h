@@ -413,6 +413,7 @@ public:
 	//network API
 
 	Ref<MultiplayerAPI> get_multiplayer_api() const;
+	void set_multiplayer_api(Ref<MultiplayerAPI> p_multiplayer_api);
 	void set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_network_peer);
 	Ref<NetworkedMultiplayerPeer> get_network_peer() const;
 	bool is_network_server() const;
