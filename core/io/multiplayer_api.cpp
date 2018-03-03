@@ -660,6 +660,30 @@ bool MultiplayerAPI::is_network_server() const {
 	return network_peer->is_server();
 }
 
+void MultiplayerAPI::set_refuse_new_network_connections(bool p_refuse) {
+
+	ERR_FAIL_COND(!network_peer.is_valid());
+	network_peer->set_refuse_new_connections(p_refuse);
+}
+
+bool MultiplayerAPI::is_refusing_new_network_connections() const {
+
+	ERR_FAIL_COND_V(!network_peer.is_valid(), false);
+	return network_peer->is_refusing_new_connections();
+}
+
+Vector<int> MultiplayerAPI::get_network_connected_peers() const {
+
+	ERR_FAIL_COND_V(!network_peer.is_valid(), Vector<int>());
+
+	Vector<int> ret;
+	for (Set<int>::Element *E = connected_peers.front(); E; E = E->next()) {
+		ret.push_back(E->get());
+	}
+
+	return ret;
+}
+
 void MultiplayerAPI::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_root_node", "node"), &MultiplayerAPI::set_root_node);
 	ClassDB::bind_method(D_METHOD("has_network_peer"), &MultiplayerAPI::has_network_peer);
@@ -676,6 +700,11 @@ void MultiplayerAPI::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("connected_to_server"), &MultiplayerAPI::connected_to_server);
 	ClassDB::bind_method(D_METHOD("connection_failed"), &MultiplayerAPI::connection_failed);
 	ClassDB::bind_method(D_METHOD("server_disconnected"), &MultiplayerAPI::server_disconnected);
+	ClassDB::bind_method(D_METHOD("get_network_connected_peers"), &MultiplayerAPI::get_network_connected_peers);
+	ClassDB::bind_method(D_METHOD("set_refuse_new_network_connections", "refuse"), &MultiplayerAPI::set_refuse_new_network_connections);
+	ClassDB::bind_method(D_METHOD("is_refusing_new_network_connections"), &MultiplayerAPI::is_refusing_new_network_connections);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "refuse_new_network_connections"), "set_refuse_new_network_connections", "is_refusing_new_network_connections");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "network_peer", PROPERTY_HINT_RESOURCE_TYPE, "NetworkedMultiplayerPeer", 0), "set_network_peer", "get_network_peer");
 
 	ADD_SIGNAL(MethodInfo("network_peer_connected", PropertyInfo(Variant::INT, "id")));
 	ADD_SIGNAL(MethodInfo("network_peer_disconnected", PropertyInfo(Variant::INT, "id")));

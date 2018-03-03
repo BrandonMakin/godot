@@ -1689,14 +1689,8 @@ int SceneTree::get_network_unique_id() const {
 }
 
 Vector<int> SceneTree::get_network_connected_peers() const {
-	ERR_FAIL_COND_V(!!multiplayer_api->has_network_peer(), Vector<int>());
 
-	Vector<int> ret;
-	for (Set<int>::Element *E = multiplayer_api->get_connected_peers().front(); E; E = E->next()) {
-		ret.push_back(E->get());
-	}
-
-	return ret;
+	return multiplayer_api->get_network_connected_peers();
 }
 
 int SceneTree::get_rpc_sender_id() const {
@@ -1704,15 +1698,11 @@ int SceneTree::get_rpc_sender_id() const {
 }
 
 void SceneTree::set_refuse_new_network_connections(bool p_refuse) {
-	ERR_FAIL_COND(!multiplayer_api->has_network_peer());
-	multiplayer_api->get_network_peer()->set_refuse_new_connections(p_refuse);
+	multiplayer_api->set_refuse_new_network_connections(p_refuse);
 }
 
 bool SceneTree::is_refusing_new_network_connections() const {
-
-	ERR_FAIL_COND_V(!multiplayer_api->has_network_peer(), false);
-
-	return multiplayer_api->get_network_peer()->is_refusing_new_connections();
+	return multiplayer_api->is_refusing_new_network_connections();
 }
 
 void SceneTree::_bind_methods() {
