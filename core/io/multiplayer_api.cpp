@@ -685,6 +685,7 @@ void MultiplayerAPI::_bind_methods() {
 }
 
 MultiplayerAPI::MultiplayerAPI() {
+	clear();
 }
 
 MultiplayerAPI::~MultiplayerAPI() {
