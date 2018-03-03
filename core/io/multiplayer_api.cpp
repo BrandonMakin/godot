@@ -75,6 +75,7 @@ Ref<NetworkedMultiplayerPeer> MultiplayerAPI::get_network_peer() const {
 
 void MultiplayerAPI::_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
+	ERR_FAIL_COND(root_node == NULL);
 	ERR_FAIL_COND(p_packet_len < 5);
 
 	uint8_t packet_type = p_packet[0];
@@ -95,7 +96,6 @@ void MultiplayerAPI::_process_packet(int p_from, const uint8_t *p_packet, int p_
 		case NETWORK_COMMAND_REMOTE_SET: {
 
 			ERR_FAIL_COND(p_packet_len < 6);
-			ERR_FAIL_COND(root_node == NULL);
 
 			Node *node = _process_get_node(p_from, p_packet, p_packet_len);
 
