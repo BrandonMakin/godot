@@ -192,7 +192,10 @@ IP_Address LWSPeer::get_connected_host() const {
 
 	socklen_t len;
 	struct sockaddr_storage addr;
+	memset(&addr, 0, sizeof(struct sockaddr_storage));
+
 	int fd = lws_get_socket_fd(wsi);
+	ERR_FAIL_COND_V(fd == -1, IP_Address());
 
 	int ret = getpeername(fd, (struct sockaddr *)&addr, &len);
 	ERR_FAIL_COND_V(ret != 0, IP_Address());
@@ -211,7 +214,10 @@ uint16_t LWSPeer::get_connected_port() const {
 
 	socklen_t len;
 	struct sockaddr_storage addr;
+	memset(&addr, 0, sizeof(struct sockaddr_storage));
+
 	int fd = lws_get_socket_fd(wsi);
+	ERR_FAIL_COND_V(fd == -1, 0);
 
 	int ret = getpeername(fd, (struct sockaddr *)&addr, &len);
 	ERR_FAIL_COND_V(ret != 0, 0);
