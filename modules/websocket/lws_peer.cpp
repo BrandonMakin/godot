@@ -35,6 +35,7 @@
 // Needed for socket_helpers on Android at least. UNIXes has it, just include if not windows
 #if !defined(WINDOWS_ENABLED)
 #include <netinet/in.h>
+#include <sys/socket.h>
 #endif
 
 #include "drivers/unix/socket_helpers.h"
