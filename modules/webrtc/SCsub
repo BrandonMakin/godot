@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+
+Import('env')
+Import('env_modules')
+
+# Thirdparty source files
+
+env_webrtc = env_modules.Clone()
+
+thirdparty_dir = "#thirdparty/webrtc/"
+thirdparty_sources = [
+    "jsep.cc",
+#    "video_codecs/builtin_video_decoder_factory.cc",
+#    "video_codecs/video_encoder_config.cc",
+#    "video_codecs/video_encoder.cc",
+#    "video_codecs/builtin_video_encoder_factory.cc",
+#    "video_codecs/sdp_video_format.cc",
+#    "video_codecs/video_decoder.cc",
+#    "video/video_timing.cc",
+#    "video/video_source_interface.cc",
+#    "video/encoded_frame.cc",
+#    "video/video_bitrate_allocation.cc",
+#    "video/video_frame.cc",
+#    "video/video_stream_decoder_create.cc",
+#    "video/video_frame_buffer.cc",
+#    "video/video_content_type.cc",
+#    "video/i420_buffer.cc",
+    "transport/bitrate_settings.cc",
+    "transport/network_types.cc",
+    "call/transport.cc",
+#    "fakemetricsobserver.cc",
+#    "rtpreceiverinterface.cc",
+    "units/timestamp.cc",
+    "units/data_size.cc",
+    "units/time_delta.cc",
+    "units/data_rate.cc",
+#    "ortc/mediadescription.cc",
+    "ortc/sessiondescription.cc",
+    "rtp_headers.cc",
+    "proxy.cc",
+#    "mediatypes.cc",
+    "candidate.cc",
+    "umametrics.cc",
+#    "mediastreaminterface.cc",
+#    "mediaconstraintsinterface.cc",
+#    "audio_options.cc",
+#    "audio/echo_canceller3_factory.cc",
+#    "audio/echo_canceller3_config.cc",
+#    "audio/audio_frame.cc",
+#    "audio_codecs/audio_encoder.cc",
+#    "audio_codecs/ilbc/audio_decoder_ilbc.cc",
+#    "audio_codecs/ilbc/audio_encoder_ilbc.cc",
+#    "audio_codecs/audio_encoder_factory.cc",
+#    "audio_codecs/audio_decoder_factory.cc",
+#    "audio_codecs/g722/audio_encoder_g722.cc",
+#    "audio_codecs/g722/audio_decoder_g722.cc",
+#    "audio_codecs/isac/audio_encoder_isac_float.cc",
+#    "audio_codecs/isac/audio_decoder_isac_float.cc",
+#    "audio_codecs/isac/audio_encoder_isac_fix.cc",
+#    "audio_codecs/isac/audio_decoder_isac_fix.cc",
+#    "audio_codecs/L16/audio_encoder_L16.cc",
+#    "audio_codecs/L16/audio_decoder_L16.cc",
+#    "audio_codecs/opus/audio_encoder_opus_config.cc",
+#    "audio_codecs/opus/audio_decoder_opus.cc",
+#    "audio_codecs/opus/audio_encoder_opus.cc",
+#    "audio_codecs/g711/audio_decoder_g711.cc",
+#    "audio_codecs/g711/audio_encoder_g711.cc",
+#    "audio_codecs/audio_decoder.cc",
+#    "audio_codecs/audio_codec_pair_id.cc",
+#    "audio_codecs/builtin_audio_encoder_factory.cc",
+#    "audio_codecs/audio_format.cc",
+#    "audio_codecs/builtin_audio_decoder_factory.cc",
+#    "optional.cc",
+    "rtpparameters.cc",
+    "statstypes.cc",
+    "rtcerror.cc"
+]
+
+thirdparty_sources = [thirdparty_dir + "api/" + f for f in thirdparty_sources]
+
+if env_webrtc["platform"] == "javascript": # No need to add third party libraries at all
+    pass
+else:
+    env_webrtc.add_source_files(env.modules_sources, thirdparty_sources)
+    env_webrtc.Append(CPPPATH=[thirdparty_dir])
+
+env_webrtc.add_source_files(env.modules_sources, "*.cpp")
+env_webrtc.add_source_files(env.modules_sources, "*.cc")
+env_webrtc.Append(CCFLAGS=["-DWEBRTC_POSIX"])
