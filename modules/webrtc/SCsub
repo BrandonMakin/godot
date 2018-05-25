@@ -87,5 +87,7 @@ else:
 env_webrtc.add_source_files(env.modules_sources, "*.cpp")
 env_webrtc.add_source_files(env.modules_sources, "*.cc")
 
-if env_webrtc["platform"] != "windows" and env_webrtc["platform"] != "uwp":
+if env_webrtc["platform"] == "windows" or env_webrtc["platform"] == "uwp":
+    env_webrtc.Append(CCFLAGS=["-DWEBRTC_WIN"])
+else:
     env_webrtc.Append(CCFLAGS=["-DWEBRTC_POSIX"])
