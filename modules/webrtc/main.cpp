@@ -9,10 +9,23 @@
 // 環境に合わせてマクロ定義が必要
 //#define WEBRTC_ANDROID 1
 //#define WEBRTC_IOS 1
-#define WEBRTC_LINUX 1
-//#define WEBRTC_MAC 1
+#ifdef WINDOWS_ENABLED
+#define WEBRTC_WIN 1
+#else
 #define WEBRTC_POSIX 1
-//#define WEBRTC_WIN 1
+#endif
+
+#if defined(WINDOWS_ENABLED)
+// nothing else
+#elif defined(OSX_ENABLED)
+  #define WEBRTC_MAC 1
+#elif defined(ANDROID_ENABLED)
+  #define WEBRTC_ANDROID 1
+#elif defined(IPHONE_ENABLED)
+  #define WEBRTC_IOS 1
+#else
+  #define WEBRTC_LINUX 1
+#endif
 
 // WebRTC関連のヘッダ
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
