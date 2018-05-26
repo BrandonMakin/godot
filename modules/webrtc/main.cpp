@@ -66,22 +66,22 @@ class Connection {
     }
   
     void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "PeerConnectionObserver::SignalingChange(" << new_state << ")" << std::endl;
     };
 
     void OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "PeerConnectionObserver::AddStream" << std::endl;
     };
 
     void OnRemoveStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "PeerConnectionObserver::RemoveStream" << std::endl;
     };
 
     void OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "PeerConnectionObserver::DataChannel(" << data_channel
                 << ", " << parent.data_channel.get() << ")" << std::endl;
       // Answer送信側は、onDataChannelでDataChannelの接続を受け付ける
@@ -90,22 +90,22 @@ class Connection {
     };
 
     void OnRenegotiationNeeded() override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "PeerConnectionObserver::RenegotiationNeeded" << std::endl;
     };
 
     void OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState new_state) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "PeerConnectionObserver::IceConnectionChange(" << new_state << ")" << std::endl;
     };
 
     void OnIceGatheringChange(webrtc::PeerConnectionInterface::IceGatheringState new_state) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "PeerConnectionObserver::IceGatheringChange(" << new_state << ")" << std::endl;
     };
 
     void OnIceCandidate(const webrtc::IceCandidateInterface* candidate) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "PeerConnectionObserver::IceCandidate" << std::endl;
       parent.onIceCandidate(candidate);
     };
@@ -121,19 +121,19 @@ class Connection {
 
     // 接続状況が変化した時に発火する。切断は発火タイミングで値を確認して検知可能
     void OnStateChange() override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "DataChannelObserver::StateChange" << std::endl;
     };
     
     // メッセージ受信
     void OnMessage(const webrtc::DataBuffer& buffer) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "DataChannelObserver::Message" << std::endl;
       std::cout << std::string(buffer.data.data<char>(), buffer.data.size()) << std::endl;
     };
 
     void OnBufferedAmountChange(uint64_t previous_amount) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "DataChannelObserver::BufferedAmountChange(" << previous_amount << ")" << std::endl;
     };
   };
@@ -147,13 +147,13 @@ class Connection {
     }
   
     void OnSuccess(webrtc::SessionDescriptionInterface* desc) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "CreateSessionDescriptionObserver::OnSuccess" << std::endl;
       parent.onSuccessCSD(desc);
     };
 
     void OnFailure(const std::string& error) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "CreateSessionDescriptionObserver::OnFailure" << std::endl << error << std::endl;
     };
   };
@@ -167,12 +167,12 @@ class Connection {
     }
     
     void OnSuccess() override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "SetSessionDescriptionObserver::OnSuccess" << std::endl;
     };
 
     void OnFailure(const std::string& error) override {
-      std::cout << std::this_thread::get_id() << ":"
+      std::cout << ":"
                 << "SetSessionDescriptionObserver::OnFailure" << std::endl << error << std::endl;
     };
   };
@@ -293,7 +293,7 @@ int main(int argc, char* argv[]) {
   rtc::FlagList::SetFlagsFromCommandLine(&argc, argv, true);
   rtc::FlagList::Print(nullptr, false);
 
-  std::cout << std::this_thread::get_id() << ":"
+  std::cout << ":"
             << "Main thread" << std::endl;
 
   // GoogleのSTUNサーバを利用

@@ -28,9 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 #include "register_types.h"
-#include "main.h"
 
-void register_webrtc_types() {
-}
+void register_webrtc_types() {}
 
 void unregister_webrtc_types() {}
