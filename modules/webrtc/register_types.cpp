@@ -28,7 +28,11 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 #include "register_types.h"
+#include "class_db.h"
+#include "webrtc.h"
 
-void register_webrtc_types() {}
+void register_webrtc_types() {
+  ClassDB::register_class<WebRTC>();
+}
 
-void unregister_webrtc_types() {}
+void unregister_webrtc_types() {} // nothing to do here
