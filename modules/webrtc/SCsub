@@ -86,8 +86,8 @@ if not env_webrtc["platform"] == "javascript": # No need to add third party libr
     env_webrtc.Append(CCFLAGS=["-std=c++11"])
 
     if env_webrtc["platform"] == "windows" or env_webrtc["platform"] == "uwp":
-            env_webrtc.Append(CCFLAGS=["-DWEBRTC_WIN", "-D_WINSOCKAPI_"])
-        else:
-            env_webrtc.Append(CCFLAGS=["-DWEBRTC_POSIX"])
+            env_webrtc.Append(CCFLAGS=["-DWEBRTC_WIN", "-D_WINSOCKAPI_", "/showIncludes"])
+    else:
+        env_webrtc.Append(CCFLAGS=["-DWEBRTC_POSIX"])
 
 env_webrtc.add_source_files(env.modules_sources, "*.cpp")
