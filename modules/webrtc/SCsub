@@ -9,8 +9,9 @@ env_webrtc = env_modules.Clone()
 
 thirdparty_dir = "#thirdparty/webrtc/"
 thirdparty_sources = [
+    "pc/createpeerconnectionfactory.cc",
     "api/jsep.cc",
-#    "api/video_codecs/builtin_video_decoder_factory.cc",
+   # "api/video_codecs/builtin_video_decoder_factory.cc",
 #    "api/video_codecs/video_encoder_config.cc",
 #    "api/video_codecs/video_encoder.cc",
 #    "api/video_codecs/builtin_video_encoder_factory.cc",
@@ -78,16 +79,15 @@ thirdparty_sources = [
 
 thirdparty_sources = [thirdparty_dir + f for f in thirdparty_sources]
 
-if env_webrtc["platform"] == "javascript": # No need to add third party libraries at all
-    pass
-else:
+
+if not env_webrtc["platform"] == "javascript": # No need to add third party libraries to javascript at all
     env_webrtc.add_source_files(env.modules_sources, thirdparty_sources)
     env_webrtc.Append(CPPPATH=[thirdparty_dir])
+    env_webrtc.Append(CCFLAGS=["-std=c++11"])
+
+    if env_webrtc["platform"] == "windows" or env_webrtc["platform"] == "uwp":
+            env_webrtc.Append(CCFLAGS=["-DWEBRTC_WIN", "-D_WINSOCKAPI_"])
+        else:
+            env_webrtc.Append(CCFLAGS=["-DWEBRTC_POSIX"])
 
 env_webrtc.add_source_files(env.modules_sources, "*.cpp")
-env_webrtc.add_source_files(env.modules_sources, "*.cc")
-
-if env_webrtc["platform"] == "windows" or env_webrtc["platform"] == "uwp":
-    env_webrtc.Append(CCFLAGS=["-DWEBRTC_WIN", "-D_WINSOCKAPI_", "-DNOMINMAX"])
-else:
-    env_webrtc.Append(CCFLAGS=["-DWEBRTC_POSIX"])
