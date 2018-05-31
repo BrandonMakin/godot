@@ -29,10 +29,13 @@
 /*************************************************************************/
 #include "register_types.h"
 #include "class_db.h"
-#include "webrtc.h"
+#include "webrtc_test.h"
+// #include "peer_connection.h"
+#include "webrtc_peer_connection_creator.h"
 
 void register_webrtc_types() {
-  ClassDB::register_class<WebRTC>();
+  ClassDB::register_class<WebRTCTest>();
+  ClassDB::register_class<WebRTCPeerConnectionCreator>();
 }
 
 void unregister_webrtc_types() {} // nothing to do here

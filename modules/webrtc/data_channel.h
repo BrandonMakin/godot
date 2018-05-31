@@ -1,8 +1,15 @@
-#ifndef WEBRTC_H
-#define WEBRTC_H
+#ifndef data_channel_h
+#define data_channel_h
 
-#include "core/ustring.h"
 #include "reference.h"
+#include "core/ustring.h"
+
+// #include <iostream>
+// #include <memory>
+// #include <mutex>
+// #include <queue>
+// #include <string>
+// #include <thread>
 
 #include "thirdparty/webrtc/api/audio_codecs/builtin_audio_decoder_factory.h"
 #include "thirdparty/webrtc/api/audio_codecs/builtin_audio_encoder_factory.h"
@@ -12,18 +19,9 @@
 #include "thirdparty/webrtc/rtc_base/ssladapter.h"
 #include "thirdparty/webrtc/rtc_base/thread.h"
 
-class WebRTC : public Reference {
-  GDCLASS(WebRTC, Reference);
+class DataChannel : public Reference {
+  GDCLASS(DataChannel, Reference);
 
-protected:
-    static void _bind_methods();
-
-public:
-
-	void test();
-
-	WebRTC();
-	// ~WebRTC();
 };
 
 #endif
