@@ -288,7 +288,7 @@ void cmd_quit() {
   thread->Quit();
 }
 
-int main(int argc, char* argv[]) {
+// int main(int argc, char* argv[]) {
   // 第三引数にtrueを指定すると、WebRTC関連の引数をargvから削除してくれるらしい
   rtc::FlagList::SetFlagsFromCommandLine(&argc, argv, true);
   rtc::FlagList::Print(nullptr, false);

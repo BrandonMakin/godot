@@ -30,6 +30,8 @@
 #include "register_types.h"
 #include "class_db.h"
 #include "webrtc_test.h"
+// #include "main.cpp"
+
 // #include "peer_connection.h"
 #include "webrtc_peer_connection_creator.h"
 
