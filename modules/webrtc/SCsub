@@ -90,7 +90,7 @@ thirdparty_sources = [
 ]
 
 thirdparty_sources = [thirdparty_dir + f for f in thirdparty_sources]
-env.add_sourcce_files("#thirdparty/webrtc/*.cpp")
+# env.add_source_files(env.modules_sources, "#thirdparty/webrtc/*.cc")
 
 
 if not env_webrtc["platform"] == "javascript": # No need to add third party libraries to javascript at all
