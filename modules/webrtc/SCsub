@@ -12,6 +12,7 @@ thirdparty_sources = [
 
     "media/engine/webrtcmediaengine.cc",
     "pc/createpeerconnectionfactory.cc",
+    "pc/peerconnectionfactory.cc",
     "api/jsep.cc",
 #------------------------------------------------------------------------------------------#
    # "api/video_codecs/builtin_video_decoder_factory.cc",
