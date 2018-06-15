@@ -64,7 +64,7 @@ class Connection {
    public:
     PCO(Connection& parent) : parent(parent) {
     }
-  
+
     void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) override {
       std::cout << ":"
                 << "PeerConnectionObserver::SignalingChange(" << new_state << ")" << std::endl;
@@ -110,7 +110,7 @@ class Connection {
       parent.onIceCandidate(candidate);
     };
   };
-  
+
   class DCO : public webrtc::DataChannelObserver {
    private:
     Connection& parent;
@@ -124,7 +124,7 @@ class Connection {
       std::cout << ":"
                 << "DataChannelObserver::StateChange" << std::endl;
     };
-    
+
     // メッセージ受信
     void OnMessage(const webrtc::DataBuffer& buffer) override {
       std::cout << ":"
@@ -145,7 +145,7 @@ class Connection {
    public:
     CSDO(Connection& parent) : parent(parent) {
     }
-  
+
     void OnSuccess(webrtc::SessionDescriptionInterface* desc) override {
       std::cout << ":"
                 << "CreateSessionDescriptionObserver::OnSuccess" << std::endl;
@@ -165,7 +165,7 @@ class Connection {
    public:
     SSDO(Connection& parent) : parent(parent) {
     }
-    
+
     void OnSuccess() override {
       std::cout << ":"
                 << "SetSessionDescriptionObserver::OnSuccess" << std::endl;
@@ -302,7 +302,7 @@ int main(int argc, char* argv[]) {
   configuration.servers.push_back(ice_server);
 
   thread.reset(new rtc::Thread(&socket_server));
-  
+
   rtc::InitializeSSL();
 
   CustomRunnable runnable;
@@ -362,7 +362,7 @@ int main(int argc, char* argv[]) {
         } else if (command == "send") {
           cmd_send(parameter);
         }
-        
+
         parameter = "";
         is_cmd_mode = true;
 

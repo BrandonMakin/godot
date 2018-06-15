@@ -9,8 +9,13 @@ env_webrtc = env_modules.Clone()
 
 thirdparty_dir = "#thirdparty/webrtc/"
 thirdparty_sources = [
+
+    "media/engine/webrtcmediaengine.cc",
+    "pc/createpeerconnectionfactory.cc",
+    "pc/peerconnectionfactory.cc",
     "api/jsep.cc",
-#    "api/video_codecs/builtin_video_decoder_factory.cc",
+#------------------------------------------------------------------------------------------#
+   # "api/video_codecs/builtin_video_decoder_factory.cc",
 #    "api/video_codecs/video_encoder_config.cc",
 #    "api/video_codecs/video_encoder.cc",
 #    "api/video_codecs/builtin_video_encoder_factory.cc",
@@ -25,22 +30,30 @@ thirdparty_sources = [
 #    "api/video/video_frame_buffer.cc",
 #    "api/video/video_content_type.cc",
 #    "api/video/i420_buffer.cc",
+############################################################################################
     "api/transport/bitrate_settings.cc",
     "api/transport/network_types.cc",
     "api/call/transport.cc",
+#------------------------------------------------------------------------------------------#
 #    "api/fakemetricsobserver.cc",
 #    "api/rtpreceiverinterface.cc",
+############################################################################################
     "api/units/timestamp.cc",
     "api/units/data_size.cc",
     "api/units/time_delta.cc",
     "api/units/data_rate.cc",
+#------------------------------------------------------------------------------------------#
 #    "api/ortc/mediadescription.cc",
+############################################################################################
     "api/ortc/sessiondescription.cc",
     "api/rtp_headers.cc",
     "api/proxy.cc",
+#------------------------------------------------------------------------------------------#
 #    "api/mediatypes.cc",
+############################################################################################
     "api/candidate.cc",
     "api/umametrics.cc",
+#------------------------------------------------------------------------------------------#
 #    "api/mediastreaminterface.cc",
 #    "api/mediaconstraintsinterface.cc",
 #    "api/audio_options.cc",
@@ -71,23 +84,29 @@ thirdparty_sources = [
 #    "api/audio_codecs/audio_format.cc",
 #    "api/audio_codecs/builtin_audio_decoder_factory.cc",
 #    "api/optional.cc",
+############################################################################################
     "api/rtpparameters.cc",
     "api/statstypes.cc",
     "api/rtcerror.cc"
 ]
 
 thirdparty_sources = [thirdparty_dir + f for f in thirdparty_sources]
+# env.add_source_files(env.modules_sources, "#thirdparty/webrtc/*.cc")
 
-if env_webrtc["platform"] == "javascript": # No need to add third party libraries at all
-    pass
-else:
+
+if not env_webrtc["platform"] == "javascript": # No need to add third party libraries to javascript at all
     env_webrtc.add_source_files(env.modules_sources, thirdparty_sources)
     env_webrtc.Append(CPPPATH=[thirdparty_dir])
 
-env_webrtc.add_source_files(env.modules_sources, "*.cpp")
-env_webrtc.add_source_files(env.modules_sources, "*.cc")
+    if env_webrtc["platform"] == "windows" or env_webrtc["platform"] == "uwp":
+            env_webrtc.Append(CCFLAGS=["-DWEBRTC_WIN", "-D_WINSOCKAPI_", "-DNOMINMAX"])
+            # ^ "-DNOMINMAX" is defined by WebRTC internally (in "win32.cc" file I believe)
+            # TODO eventually it would be better to compile WebRTC's own platform-specific code that redefining some of it manually
 
-if env_webrtc["platform"] == "windows" or env_webrtc["platform"] == "uwp":
-    env_webrtc.Append(CCFLAGS=["-DWEBRTC_WIN", "-D_WINSOCKAPI_", "-DNOMINMAX"])
-else:
-    env_webrtc.Append(CCFLAGS=["-DWEBRTC_POSIX"])
+            # add the CCFLAGS tag "/showIncludes" to show what files are included
+    else:
+        env_webrtc.Append(CCFLAGS=["-std=c++11"])
+        env_webrtc.Append(CCFLAGS=["-DWEBRTC_POSIX"])
+
+env_webrtc.Append(CPPDEFINES=["USE_BUILTIN_SW_CODECS"])
+env_webrtc.add_source_files(env.modules_sources, "*.cpp")

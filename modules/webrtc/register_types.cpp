@@ -28,7 +28,16 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 #include "register_types.h"
+#include "class_db.h"
+#include "webrtc_test.h"
+// #include "main.cpp"
 
-void register_webrtc_types() {}
+// #include "peer_connection.h"
+#include "webrtc_peer_connection_creator.h"
 
-void unregister_webrtc_types() {}
+void register_webrtc_types() {
+  ClassDB::register_class<WebRTCTest>();
+  ClassDB::register_class<WebRTCPeerConnectionCreator>();
+}
+
+void unregister_webrtc_types() {} // nothing to do here
