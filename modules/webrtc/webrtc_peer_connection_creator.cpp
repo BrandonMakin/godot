@@ -55,6 +55,7 @@ int WebRTCPeerConnectionCreator::host_call() {
   // them to PeerConnection by calling AddTrack (or legacy method, AddStream).
 
   // Do I need to do step #3 for data channels?
+  // CreateDataChannel(
 
   // 4. Create an offer, call SetLocalDescription with it, serialize it, and send
   // it to the remote peer
