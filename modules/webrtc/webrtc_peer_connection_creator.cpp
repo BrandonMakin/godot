@@ -14,13 +14,17 @@ void WebRTCPeerConnectionCreator::_bind_methods()
 
   ClassDB::bind_method(D_METHOD("test"), &WebRTCPeerConnectionCreator::test);
   ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeerConnectionCreator::host_call);
+  ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
 }
 
 WebRTCPeerConnectionCreator::WebRTCPeerConnectionCreator()
 {
+  pco.parent = this;
+  ptr_csdo->parent = this;
 }
 
 int WebRTCPeerConnectionCreator::host_call() {
+  emit_signal("notify", "WebRTCPeerConnectionCreator:: hosting call");
   // 1. Create a PeerConnectionFactoryInterface. Check constructors for more
   // information about input parameters.
 
@@ -42,7 +46,7 @@ int WebRTCPeerConnectionCreator::host_call() {
   // which is used to receive callbacks from the PeerConnection.
 
   webrtc::PeerConnectionInterface::RTCConfiguration configuration; // default configuration
-  GodotPeerConnectionObserver pco;
+  // GodotPeerConnectionObserver pco;
 
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection;
   peer_connection = pc_factory->CreatePeerConnection(
@@ -59,7 +63,12 @@ int WebRTCPeerConnectionCreator::host_call() {
 
   // 4. Create an offer, call SetLocalDescription with it, serialize it, and send
   // it to the remote peer
-  //
+
+  peer_connection->CreateOffer(
+    ptr_csdo, // CreateSessionDescriptionObserver* observer,
+    nullptr // const MediaConstraintsInterface* constraints
+  );
+
   // 5. Once an ICE candidate has been gathered, the PeerConnection will call the
   // observer function OnIceCandidate. The candidates must also be serialized and
   // sent to the remote peer.
