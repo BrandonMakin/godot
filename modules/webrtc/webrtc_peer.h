@@ -73,7 +73,7 @@ public:
   public:
     WebRTCPeer* parent;
 
-    // GD_CSDO(WebRTCPeer* parent);
+    GD_CSDO(WebRTCPeer* parent);
 
     void OnSuccess(webrtc::SessionDescriptionInterface* desc) override;
 
@@ -96,8 +96,8 @@ public:
 
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pc_factory;
 
-  // std::unique_ptr<rtc::Thread> signalling_thread;
-  // rtc::Thread* signalling_thread;
+  // std::unique_ptr<rtc::Thread> signaling_thread;
+  rtc::Thread* signaling_thread;
   webrtc::DataChannelInit data_channel_config;
 
 

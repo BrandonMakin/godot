@@ -18,13 +18,10 @@ void WebRTCPeer::_bind_methods()
 }
 
 WebRTCPeer::WebRTCPeer() :  pco(this)
-                                                              , ptr_csdo(new rtc::RefCountedObject<GD_CSDO>())
-                                                              // , signalling_thread(new rtc::Thread)
+                            , ptr_csdo(new rtc::RefCountedObject<GD_CSDO>(this))
+                            // , signalling_thread(new rtc::Thread)
 
 {
-  // pco(this);
-  // pco.parent = this;
-  // ptr_csdo->parent = this;  // CAUSES AN ERROR WHEN UNCOMMENTED - Freezes Godot - Idk why.
 }
 
 int WebRTCPeer::host_call() {
@@ -33,10 +30,12 @@ int WebRTCPeer::host_call() {
   // information about input parameters.
 
   // signaling_thread = new rtc::Thread;
+  // signaling_thread->Run();
   pc_factory = webrtc::CreateModularPeerConnectionFactory(
     nullptr, // rtc::Thread* network_thread,
     nullptr, // rtc::Thread* worker_thread,
     nullptr, // rtc::Thread* signaling_thread,  [Brandon's note: consider using our own signaling_thread]
+    // signaling_thread,
     nullptr, // std::unique_ptr<cricket::MediaEngineInterface> media_engine,
     nullptr, // std::unique_ptr<CallFactoryInterface> call_factory,
     nullptr  // std::unique_ptr<RtcEventLogFactoryInterface> event_log_factory

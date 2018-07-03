@@ -1,10 +1,9 @@
 #include "webrtc_peer.h"
 
-// WebRTCPeer::GD_CSDO::GD_CSDO(WebRTCPeer* parent)
-// {
-//   this->parent = parent;
-//   std::cout << "GD_CSDO::Constructor\n";
-// }
+WebRTCPeer::GD_CSDO::GD_CSDO(WebRTCPeer* parent)
+{
+  this->parent = parent;
+}
 
 void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   std::cout << "CreateSessionDescriptionObserver::OnSuccess" << std::endl;
