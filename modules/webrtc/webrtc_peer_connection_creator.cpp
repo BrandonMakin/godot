@@ -19,8 +19,8 @@ void WebRTCPeerConnectionCreator::_bind_methods()
 
 WebRTCPeerConnectionCreator::WebRTCPeerConnectionCreator()
 {
-  pco.parent = this;
-  ptr_csdo->parent = this;
+  // pco.parent = this;
+  // ptr_csdo->parent = this;  // CAUSES AN ERROR WHEN UNCOMMENTED - Freezes Godot - Idk why.
 }
 
 int WebRTCPeerConnectionCreator::host_call() {
@@ -38,7 +38,9 @@ int WebRTCPeerConnectionCreator::host_call() {
     nullptr  // std::unique_ptr<RtcEventLogFactoryInterface> event_log_factory
   );
   if (pc_factory.get() == nullptr)
-    return 0xBADFAC; // "bad factory" -> the factory isn't created correctly
+    std::cout << "[FAILURE]: "; else std::cout << "[success]: ";
+  std::cout << "peer connection factory\n";
+    // return 0xBADFAC; // "bad factory" -> the factory isn't created correctly
 
   // 2. Create a PeerConnection object. Provide a configuration struct which
   // points to STUN and/or TURN servers used to generate ICE candidates, and
@@ -48,12 +50,14 @@ int WebRTCPeerConnectionCreator::host_call() {
   webrtc::PeerConnectionInterface::RTCConfiguration configuration; // default configuration
   // GodotPeerConnectionObserver pco;
 
-  rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection;
+  // rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection;
   peer_connection = pc_factory->CreatePeerConnection(
     configuration, nullptr, nullptr, &pco);
 
   if (peer_connection.get() == nullptr)
-    return 0xBADC; // "bad connection" -> the factory isn't created correctly
+  std::cout << "[FAILURE]: "; else std::cout << "[success]: ";
+  std::cout << "peer connection\n";
+    // return 0xBADC; // "bad connection" -> the peer connection isn't created correctly
 
   // 3. Create local MediaStreamTracks using the PeerConnectionFactory and add
   // them to PeerConnection by calling AddTrack (or legacy method, AddStream).
@@ -61,13 +65,18 @@ int WebRTCPeerConnectionCreator::host_call() {
   // Do I need to do step #3 for data channels?
   // CreateDataChannel(
 
+  webrtc::DataChannelInit dc_config;
+  data_channel = peer_connection->CreateDataChannel("channel", &dc_config);
+
   // 4. Create an offer, call SetLocalDescription with it, serialize it, and send
   // it to the remote peer
 
   peer_connection->CreateOffer(
     ptr_csdo, // CreateSessionDescriptionObserver* observer,
-    nullptr // const MediaConstraintsInterface* constraints
+    webrtc::PeerConnectionInterface::RTCOfferAnswerOptions() // const MediaConstraintsInterface* constraints
   );
+  // std::cout << "[FAILURE]: "; else std::cout << "[success]: ";
+  // std::cout << "create offer\n";
 
   // 5. Once an ICE candidate has been gathered, the PeerConnection will call the
   // observer function OnIceCandidate. The candidates must also be serialized and
@@ -79,6 +88,7 @@ int WebRTCPeerConnectionCreator::host_call() {
   // 7. Once a remote candidate is received from the remote peer, provide it to
   // the PeerConnection by calling AddIceCandidate.
   //
+  return 0;
 }
 
 WebRTCPeerConnectionCreator::~WebRTCPeerConnectionCreator()

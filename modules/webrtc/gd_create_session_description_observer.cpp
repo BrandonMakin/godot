@@ -7,8 +7,10 @@
 
 void WebRTCPeerConnectionCreator::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   // parent->emit_signal("notify", "CreateSessionDescriptionObserver::OnSuccess");
+  std::cout << "CreateSessionDescriptionObserver::OnSuccess" << std::endl;
 };
 
 void WebRTCPeerConnectionCreator::GD_CSDO::OnFailure(const std::string& error) {
   // parent->emit_signal("notify", "CreateSessionDescriptionObserver::OnFailure");
+  std::cout << "CreateSessionDescriptionObserver::OnFailure" << std::endl;
 };

@@ -1,6 +1,7 @@
 #ifndef WEBRTC_PEER_CONNECTION_CREATOR_H
 #define WEBRTC_PEER_CONNECTION_CREATOR_H
 
+#include <iostream> //remove eventually
 #include "reference.h"
 #include "api/peerconnectioninterface.h"
 // #include "gd_peer_connection_observer.h"
@@ -69,8 +70,8 @@ public:
 
   /** CreateSessionDescriptionObserver callback functions **/
   class GD_CSDO : public webrtc::CreateSessionDescriptionObserver {
-    public:
-      WebRTCPeerConnectionCreator* parent;
+  public:
+    WebRTCPeerConnectionCreator* parent;
 
     // GD_CSDO(WebRTCPeerConnectionCreator* parent);
 
@@ -80,8 +81,21 @@ public:
 
     // void AddRef()
   };
+  class GD_DCO : public webrtc::DataChannelObserver {
+  public:
+    GD_DCO();
+    void OnStateChange() override;
+    void OnMessage(const webrtc::DataBuffer& buffer) override;
+
+    void OnBufferedAmountChange(uint64_t previous_amount) override;
+  };
+
+
+  rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection;
+  rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel;
 
   GD_PCO pco;
+  GD_DCO dco;
   rtc::scoped_refptr<GD_CSDO> ptr_csdo;
 
 
