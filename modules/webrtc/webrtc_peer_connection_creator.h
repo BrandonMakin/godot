@@ -41,7 +41,7 @@ public:
   public:
     WebRTCPeerConnectionCreator* parent;
 
-    // GD_PCO(WebRTCPeerConnectionCreator* parent);
+    GD_PCO(WebRTCPeerConnectionCreator* parent);
 
     void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) override;
 
@@ -93,6 +93,13 @@ public:
 
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection;
   rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel;
+
+  rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pc_factory;
+
+  // std::unique_ptr<rtc::Thread> signalling_thread;
+  // rtc::Thread* signalling_thread;
+  webrtc::DataChannelInit data_channel_config;
+
 
   GD_PCO pco;
   GD_DCO dco;

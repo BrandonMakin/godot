@@ -17,8 +17,12 @@ void WebRTCPeerConnectionCreator::_bind_methods()
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
 }
 
-WebRTCPeerConnectionCreator::WebRTCPeerConnectionCreator()
+WebRTCPeerConnectionCreator::WebRTCPeerConnectionCreator() :  pco(this)
+                                                              , ptr_csdo(new rtc::RefCountedObject<GD_CSDO>())
+                                                              // , signalling_thread(new rtc::Thread)
+
 {
+  // pco(this);
   // pco.parent = this;
   // ptr_csdo->parent = this;  // CAUSES AN ERROR WHEN UNCOMMENTED - Freezes Godot - Idk why.
 }
@@ -28,11 +32,11 @@ int WebRTCPeerConnectionCreator::host_call() {
   // 1. Create a PeerConnectionFactoryInterface. Check constructors for more
   // information about input parameters.
 
-  rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pc_factory;
+  // signaling_thread = new rtc::Thread;
   pc_factory = webrtc::CreateModularPeerConnectionFactory(
     nullptr, // rtc::Thread* network_thread,
     nullptr, // rtc::Thread* worker_thread,
-    nullptr, // rtc::Thread* signaling_thread,
+    nullptr, // rtc::Thread* signaling_thread,  [Brandon's note: consider using our own signaling_thread]
     nullptr, // std::unique_ptr<cricket::MediaEngineInterface> media_engine,
     nullptr, // std::unique_ptr<CallFactoryInterface> call_factory,
     nullptr  // std::unique_ptr<RtcEventLogFactoryInterface> event_log_factory
@@ -48,9 +52,7 @@ int WebRTCPeerConnectionCreator::host_call() {
   // which is used to receive callbacks from the PeerConnection.
 
   webrtc::PeerConnectionInterface::RTCConfiguration configuration; // default configuration
-  // GodotPeerConnectionObserver pco;
 
-  // rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection;
   peer_connection = pc_factory->CreatePeerConnection(
     configuration, nullptr, nullptr, &pco);
 
@@ -62,21 +64,19 @@ int WebRTCPeerConnectionCreator::host_call() {
   // 3. Create local MediaStreamTracks using the PeerConnectionFactory and add
   // them to PeerConnection by calling AddTrack (or legacy method, AddStream).
 
-  // Do I need to do step #3 for data channels?
-  // CreateDataChannel(
-
-  webrtc::DataChannelInit dc_config;
-  data_channel = peer_connection->CreateDataChannel("channel", &dc_config);
+  data_channel = peer_connection->CreateDataChannel("channel", &data_channel_config);
 
   // 4. Create an offer, call SetLocalDescription with it, serialize it, and send
   // it to the remote peer
 
+  //I think I should do step 4 in GD_PCO::OnRenegotiationNeeded:
+  //But I'm not sure. The example client doesn't even use OnRenegotiationNeeded
+
+  //Create an offer - the rest of step 4 should be in CSDO::OnSuccess
   peer_connection->CreateOffer(
     ptr_csdo, // CreateSessionDescriptionObserver* observer,
-    webrtc::PeerConnectionInterface::RTCOfferAnswerOptions() // const MediaConstraintsInterface* constraints
+    nullptr // webrtc::PeerConnectionInterface::RTCOfferAnswerOptions() // const MediaConstraintsInterface* constraints
   );
-  // std::cout << "[FAILURE]: "; else std::cout << "[success]: ";
-  // std::cout << "create offer\n";
 
   // 5. Once an ICE candidate has been gathered, the PeerConnection will call the
   // observer function OnIceCandidate. The candidates must also be serialized and

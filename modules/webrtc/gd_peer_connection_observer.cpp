@@ -1,9 +1,9 @@
 #include "webrtc_peer_connection_creator.h"
 
-// WebRTCPeerConnectionCreator::GD_PCO::GD_PCO(WebRTCPeerConnectionCreator* parent)
-// {
-//   this->parent = parent;
-// }
+WebRTCPeerConnectionCreator::GD_PCO::GD_PCO(WebRTCPeerConnectionCreator* parent)
+{
+  this->parent = parent;
+}
 
 void WebRTCPeerConnectionCreator::GD_PCO::OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state)
 {
@@ -32,7 +32,14 @@ void WebRTCPeerConnectionCreator::GD_PCO::OnDataChannel(rtc::scoped_refptr<webrt
 void WebRTCPeerConnectionCreator::GD_PCO::OnRenegotiationNeeded()
 {
   // parent->emit_signal("notify", "PeerConnectionObserver::OnSignalingChange");
-  std::cout << "PeerConnectionObserver::OnRenegotiationNeeded " << std::endl;
+  std::cout << "PeerConnectionObserver::OnRenegotiationNeeded" << std::endl;
+
+  // parent->peer_connection->CreateOffer(
+  //   parent->ptr_csdo, // CreateSessionDescriptionObserver* observer,
+  //   webrtc::PeerConnectionInterface::RTCOfferAnswerOptions() // const MediaConstraintsInterface* constraints
+  // );
+  std::cout << "Trying to create offer\n";
+
 }
 
 void WebRTCPeerConnectionCreator::GD_PCO::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState new_state)
