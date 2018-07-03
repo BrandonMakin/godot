@@ -1,17 +1,17 @@
-#include "webrtc_peer_connection_creator.h"
+#include "webrtc_peer.h"
 
-// WebRTCPeerConnectionCreator::GD_CSDO::GD_CSDO(WebRTCPeerConnectionCreator* parent)
+// WebRTCPeer::GD_CSDO::GD_CSDO(WebRTCPeer* parent)
 // {
 //   this->parent = parent;
 //   std::cout << "GD_CSDO::Constructor\n";
 // }
 
-void WebRTCPeerConnectionCreator::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
+void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   std::cout << "CreateSessionDescriptionObserver::OnSuccess" << std::endl;
   // peer_connection_->SetLocalDescription(
   //     DummySetSessionDescriptionObserver::Create(), desc);
 };
 
-void WebRTCPeerConnectionCreator::GD_CSDO::OnFailure(const std::string& error) {
+void WebRTCPeer::GD_CSDO::OnFailure(const std::string& error) {
   std::cout << "CreateSessionDescriptionObserver::OnFailure: error = " << error << std::endl;
 };

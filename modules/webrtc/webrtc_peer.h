@@ -1,5 +1,5 @@
-#ifndef WEBRTC_PEER_CONNECTION_CREATOR_H
-#define WEBRTC_PEER_CONNECTION_CREATOR_H
+#ifndef WEBRTC_PEER_H
+#define WEBRTC_PEER_H
 
 #include <iostream> //remove eventually
 #include "reference.h"
@@ -9,10 +9,10 @@
 
 // class GodotPeerConnectionObserver;
 
-class WebRTCPeerConnectionCreator : public Reference {
+class WebRTCPeer : public Reference {
                                     // public webrtc::PeerConnectionObserver,
                                     // public webrtc::CreateSessionDescriptionObserver {
-  GDCLASS(WebRTCPeerConnectionCreator, Reference);
+  GDCLASS(WebRTCPeer, Reference);
 
 protected:
     static void _bind_methods();
@@ -29,19 +29,19 @@ public:
 
   // GodotPeerConnectionObserver pco;
 
-  WebRTCPeerConnectionCreator();
-  ~WebRTCPeerConnectionCreator();
+  WebRTCPeer();
+  ~WebRTCPeer();
 // };
 
 /** PeerConnectionObserver callback functions **/
 
   // Triggered when the SignalingState changes.
   class GD_PCO : public webrtc::PeerConnectionObserver {
-    // friend class WebRTCPeerConnectionCreator;
+    // friend class WebRTCPeer;
   public:
-    WebRTCPeerConnectionCreator* parent;
+    WebRTCPeer* parent;
 
-    GD_PCO(WebRTCPeerConnectionCreator* parent);
+    GD_PCO(WebRTCPeer* parent);
 
     void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) override;
 
@@ -71,9 +71,9 @@ public:
   /** CreateSessionDescriptionObserver callback functions **/
   class GD_CSDO : public webrtc::CreateSessionDescriptionObserver {
   public:
-    WebRTCPeerConnectionCreator* parent;
+    WebRTCPeer* parent;
 
-    // GD_CSDO(WebRTCPeerConnectionCreator* parent);
+    // GD_CSDO(WebRTCPeer* parent);
 
     void OnSuccess(webrtc::SessionDescriptionInterface* desc) override;
 

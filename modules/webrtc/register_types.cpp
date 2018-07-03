@@ -33,11 +33,11 @@
 // #include "main.cpp"
 
 // #include "peer_connection.h"
-#include "webrtc_peer_connection_creator.h"
+#include "webrtc_peer.h"
 
 void register_webrtc_types() {
   ClassDB::register_class<WebRTCTest>();
-  ClassDB::register_class<WebRTCPeerConnectionCreator>();
+  ClassDB::register_class<WebRTCPeer>();
 }
 
 void unregister_webrtc_types() {} // nothing to do here

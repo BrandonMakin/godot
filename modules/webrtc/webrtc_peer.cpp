@@ -1,4 +1,4 @@
-#include "webrtc_peer_connection_creator.h"
+#include "webrtc_peer.h"
 #include "media/base/mediaengine.h"
 
 // #include "api/audio_codecs/builtin_audio_decoder_factory.h"
@@ -9,15 +9,15 @@
 // #include "api/video_codecs/builtin_video_encoder_factory.h"
 
 
-void WebRTCPeerConnectionCreator::_bind_methods()
+void WebRTCPeer::_bind_methods()
 {
 
-  ClassDB::bind_method(D_METHOD("test"), &WebRTCPeerConnectionCreator::test);
-  ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeerConnectionCreator::host_call);
+  ClassDB::bind_method(D_METHOD("test"), &WebRTCPeer::test);
+  ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeer::host_call);
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
 }
 
-WebRTCPeerConnectionCreator::WebRTCPeerConnectionCreator() :  pco(this)
+WebRTCPeer::WebRTCPeer() :  pco(this)
                                                               , ptr_csdo(new rtc::RefCountedObject<GD_CSDO>())
                                                               // , signalling_thread(new rtc::Thread)
 
@@ -27,8 +27,8 @@ WebRTCPeerConnectionCreator::WebRTCPeerConnectionCreator() :  pco(this)
   // ptr_csdo->parent = this;  // CAUSES AN ERROR WHEN UNCOMMENTED - Freezes Godot - Idk why.
 }
 
-int WebRTCPeerConnectionCreator::host_call() {
-  emit_signal("notify", "WebRTCPeerConnectionCreator:: hosting call");
+int WebRTCPeer::host_call() {
+  emit_signal("notify", "WebRTCPeer:: hosting call");
   // 1. Create a PeerConnectionFactoryInterface. Check constructors for more
   // information about input parameters.
 
@@ -91,12 +91,12 @@ int WebRTCPeerConnectionCreator::host_call() {
   return 0;
 }
 
-WebRTCPeerConnectionCreator::~WebRTCPeerConnectionCreator()
+WebRTCPeer::~WebRTCPeer()
 {
   // delete peerConnectionFactory;
 }
 
-void WebRTCPeerConnectionCreator::test()
+void WebRTCPeer::test()
 {
   int just_some_value = 1337;
 }
