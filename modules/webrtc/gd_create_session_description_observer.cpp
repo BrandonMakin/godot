@@ -7,14 +7,20 @@ WebRTCPeer::GD_CSDO::GD_CSDO(WebRTCPeer* parent)
 
 void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   std::string message = "CreateSessionDescriptionObserver::OnSuccess";
-  parent->emit_signal("notify", "WebRTCPeer:: hosting call");
+  parent->emit_signal("notify", "CSDO::OnSuccess");
   std::cout << message << std::endl;
 
   // now that you have your offer, call SetLocalDescription with it,
   // serialize it, and send it to the remote peer
 
-  // peer_connection_->SetLocalDescription(
-  //     DummySetSessionDescriptionObserver::Create(), desc);
+  //call SetLocalDescription:
+  parent->peer_connection->SetLocalDescription(parent->ptr_ssdo, desc);  // if an ssdo isn't needed, you can use DummySetSessionDescriptionObserver::Create()
+
+  //Serialize:
+  std::string sdp; // sdp = session description protocol
+  desc->ToString(&sdp);
+  parent->emit_signal("offer_created", sdp);
+
 };
 
 void WebRTCPeer::GD_CSDO::OnFailure(const std::string& error) {

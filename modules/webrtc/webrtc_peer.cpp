@@ -15,10 +15,12 @@ void WebRTCPeer::_bind_methods()
   ClassDB::bind_method(D_METHOD("test"), &WebRTCPeer::test);
   ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeer::host_call);
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
+  ADD_SIGNAL(MethodInfo("offer_created", PropertyInfo(Variant::STRING, "secret message")));
 }
 
 WebRTCPeer::WebRTCPeer() :  pco(this)
                             , ptr_csdo(new rtc::RefCountedObject<GD_CSDO>(this))
+                            , ptr_ssdo(new rtc::RefCountedObject<GD_SSDO>())
                             // , signalling_thread(new rtc::Thread)
 
 {
@@ -34,7 +36,6 @@ int WebRTCPeer::host_call() {
   pc_factory = webrtc::CreateModularPeerConnectionFactory(
     nullptr, // rtc::Thread* network_thread,
     nullptr, // rtc::Thread* worker_thread,
-    // nullptr, // rtc::Thread* signaling_thread,  [Brandon's note: consider using our own signaling_thread]
     signaling_thread,
     nullptr, // std::unique_ptr<cricket::MediaEngineInterface> media_engine,
     nullptr, // std::unique_ptr<CallFactoryInterface> call_factory,
