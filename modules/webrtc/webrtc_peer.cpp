@@ -29,13 +29,13 @@ int WebRTCPeer::host_call() {
   // 1. Create a PeerConnectionFactoryInterface. Check constructors for more
   // information about input parameters.
 
-  // signaling_thread = new rtc::Thread;
-  // signaling_thread->Run();
+  signaling_thread = new rtc::Thread;
+  signaling_thread->Start();
   pc_factory = webrtc::CreateModularPeerConnectionFactory(
     nullptr, // rtc::Thread* network_thread,
     nullptr, // rtc::Thread* worker_thread,
-    nullptr, // rtc::Thread* signaling_thread,  [Brandon's note: consider using our own signaling_thread]
-    // signaling_thread,
+    // nullptr, // rtc::Thread* signaling_thread,  [Brandon's note: consider using our own signaling_thread]
+    signaling_thread,
     nullptr, // std::unique_ptr<cricket::MediaEngineInterface> media_engine,
     nullptr, // std::unique_ptr<CallFactoryInterface> call_factory,
     nullptr  // std::unique_ptr<RtcEventLogFactoryInterface> event_log_factory
@@ -51,6 +51,14 @@ int WebRTCPeer::host_call() {
   // which is used to receive callbacks from the PeerConnection.
 
   webrtc::PeerConnectionInterface::RTCConfiguration configuration; // default configuration
+
+  webrtc::PeerConnectionInterface::IceServer ice_server;
+
+  configuration.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;  // Temporary @TODO look this line up
+  configuration.enable_dtls_srtp = true;                             // Temporary @TODO look this line up
+
+  ice_server.uri = "stun:stun.l.google.com:19302";
+  configuration.servers.push_back(ice_server); // add ice_server to configuration
 
   peer_connection = pc_factory->CreatePeerConnection(
     configuration, nullptr, nullptr, &pco);

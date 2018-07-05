@@ -38,7 +38,7 @@ void WebRTCPeer::GD_PCO::OnRenegotiationNeeded()
   //   parent->ptr_csdo, // CreateSessionDescriptionObserver* observer,
   //   webrtc::PeerConnectionInterface::RTCOfferAnswerOptions() // const MediaConstraintsInterface* constraints
   // );
-  std::cout << "Trying to create offer\n";
+  // std::cout << "Trying to create offer from GD_PCO\n";
 
 }
 

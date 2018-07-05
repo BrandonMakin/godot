@@ -90,6 +90,9 @@ public:
     void OnBufferedAmountChange(uint64_t previous_amount) override;
   };
 
+  // class GD_SSDO : public webrtc::SetSessionDescriptionObserver {
+  //
+  // };
 
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection;
   rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel;
