@@ -56,6 +56,12 @@ void WebRTCPeer::GD_PCO::OnIceGatheringChange(webrtc::PeerConnectionInterface::I
 
 void WebRTCPeer::GD_PCO::OnIceCandidate(const webrtc::IceCandidateInterface* candidate)
 {
-  parent->emit_signal("notify", "PeerConnectionObserver::OnIceCandidate");
+  parent->emit_signal("notify", "PeerConnectionObserver::OnIceCandidate [warning: won't send ice candidates]");
   // std::cout << "OnIceCandidate " << std::endl;
+
+  // 5. Once an ICE candidate has been gathered, the PeerConnection will call the
+  // observer function OnIceCandidate. The candidates must also be serialized and
+  // sent to the remote peer.
+
+
 }

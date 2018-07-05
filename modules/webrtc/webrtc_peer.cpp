@@ -18,21 +18,15 @@ void WebRTCPeer::_bind_methods()
 
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
   ADD_SIGNAL(MethodInfo("offer_created", PropertyInfo(Variant::STRING, "sdp")));
+  // ADD_SIGNAL(MethodInfo("new_ice_candidate", PropertyInfo(Variant::STRING, "candidate")));
 }
 
 WebRTCPeer::WebRTCPeer() :  pco(this)
                             , ptr_csdo(new rtc::RefCountedObject<GD_CSDO>(this))
                             , ptr_ssdo(new rtc::RefCountedObject<GD_SSDO>())
                             // , signalling_thread(new rtc::Thread)
-
 {
-}
-
-int WebRTCPeer::host_call() {
-  emit_signal("notify", "WebRTCPeer:: hosting call");
-  // 1. Create a PeerConnectionFactoryInterface. Check constructors for more
-  // information about input parameters.
-
+  // 1. Create a PeerConnectionFactoryInterface.
   signaling_thread = new rtc::Thread;
   signaling_thread->Start();
   pc_factory = webrtc::CreateModularPeerConnectionFactory(
@@ -75,27 +69,23 @@ int WebRTCPeer::host_call() {
 
   // 3. Create local MediaStreamTracks using the PeerConnectionFactory and add
   // them to PeerConnection by calling AddTrack (or legacy method, AddStream).
-
   data_channel = peer_connection->CreateDataChannel("channel", &data_channel_config);
+}
+
+int WebRTCPeer::host_call() {
+  emit_signal("notify", "WebRTCPeer::host_call");
 
   // 4. Create an offer, call SetLocalDescription with it, serialize it, and send
   // it to the remote peer
 
-  //I think I should do step 4 in GD_PCO::OnRenegotiationNeeded:
-  //But I'm not sure. The example client doesn't even use OnRenegotiationNeeded
+  // Should I do step 4 in GD_PCO::OnRenegotiationNeeded?
+  // I'm not sure. The example client doesn't even use OnRenegotiationNeeded
 
   //Create an offer - the rest of step 4 should be in CSDO::OnSuccess
   peer_connection->CreateOffer(
     ptr_csdo, // CreateSessionDescriptionObserver* observer,
     nullptr // webrtc::PeerConnectionInterface::RTCOfferAnswerOptions() // const MediaConstraintsInterface* constraints
   );
-
-  // 5. Once an ICE candidate has been gathered, the PeerConnection will call the
-  // observer function OnIceCandidate. The candidates must also be serialized and
-  // sent to the remote peer.
-  //
-  // 6. Once an answer is received from the remote peer, call
-  // SetRemoteDescription with the remote answer.
   //
   // 7. Once a remote candidate is received from the remote peer, provide it to
   // the PeerConnection by calling AddIceCandidate.
@@ -105,9 +95,14 @@ int WebRTCPeer::host_call() {
 
 void WebRTCPeer::set_remote_description(String sdp)
 {
-  //set remote description to sdp
-  emit_signal("notify", "WebRTCPeer::SetRemoteDescription");
+  // 6. Once an answer is received from the remote peer, call
+  // SetRemoteDescription with the remote answer.
+
+  //set the remote description to sdp
+  emit_signal("notify", "WebRTCPeer::SetRemoteDescription - setting");
 }
+
+// void WebRTCPeer::add_ice_candidate
 
 WebRTCPeer::~WebRTCPeer()
 {
