@@ -42,8 +42,9 @@ int WebRTCPeer::host_call() {
     nullptr  // std::unique_ptr<RtcEventLogFactoryInterface> event_log_factory
   );
   if (pc_factory.get() == nullptr)
-    std::cout << "[FAILURE]: "; else std::cout << "[success]: ";
-  std::cout << "peer connection factory\n";
+    emit_signal("notify", "[FAILURE]: peer connection factory");
+  else
+    emit_signal("notify", "[success]: peer connection factory");
     // return 0xBADFAC; // "bad factory" -> the factory isn't created correctly
 
   // 2. Create a PeerConnection object. Provide a configuration struct which
@@ -65,9 +66,10 @@ int WebRTCPeer::host_call() {
     configuration, nullptr, nullptr, &pco);
 
   if (peer_connection.get() == nullptr)
-  std::cout << "[FAILURE]: "; else std::cout << "[success]: ";
-  std::cout << "peer connection\n";
-    // return 0xBADC; // "bad connection" -> the peer connection isn't created correctly
+    emit_signal("notify", "[FAILURE]: peer connection");
+  else
+    emit_signal("notify", "[success]: peer connection");
+  // return 0xBADC; // "bad connection" -> the peer connection isn't created correctly
 
   // 3. Create local MediaStreamTracks using the PeerConnectionFactory and add
   // them to PeerConnection by calling AddTrack (or legacy method, AddStream).
