@@ -12,9 +12,8 @@
 void WebRTCPeer::_bind_methods()
 {
 
-  ClassDB::bind_method(D_METHOD("test"), &WebRTCPeer::test);
   ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeer::host_call);
-  ClassDB::bind_method(D_METHOD("set_remote_description", "sdp"), &WebRTCPeer::set_remote_description);
+  ClassDB::bind_method(D_METHOD("set_remote_description", "sdp", "isOffer"), &WebRTCPeer::set_remote_description);
   ClassDB::bind_method(D_METHOD("add_ice_candidate", "candidate"), &WebRTCPeer::add_ice_candidate);
 
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
@@ -87,25 +86,61 @@ int WebRTCPeer::host_call() {
     ptr_csdo, // CreateSessionDescriptionObserver* observer,
     nullptr // webrtc::PeerConnectionInterface::RTCOfferAnswerOptions() // const MediaConstraintsInterface* constraints
   );
-  //
-  // 7. Once a remote candidate is received from the remote peer, provide it to
-  // the PeerConnection by calling AddIceCandidate.
-  //
   return 0;
 }
 
-void WebRTCPeer::set_remote_description(String sdp)
-{
-  // 6. Once an answer is received from the remote peer, call
-  // SetRemoteDescription with the remote answer.
+int WebRTCPeer::listen_for_call() {
+  // If the application decides to accept the call, it should:
+  //
+  //
+  //
+  // 5. Provide the local answer to the new PeerConnection by calling
+  // SetLocalDescription with the answer.
+  //
+  // 6. Provide the remote ICE candidates by calling AddIceCandidate.
+  //
+  // 7. Once a candidate has been gathered, the PeerConnection will call the
+  // observer function OnIceCandidate. Send these candidates to the remote peer.
 
+    return 0;
+}
+
+void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
+{
   emit_signal("notify", "WebRTCPeer::SetRemoteDescription - setting description");
 
-  // @TODO SetRemoteDescription to sdp
+  std::string string_sdp = sdp.utf8();
+  webrtc::SdpType type = (isOffer) ? webrtc::SdpType::kOffer : webrtc::SdpType::kAnswer;
+  // FOR THE PEER MAKING THE CALL
+  // SetRemoteDescription with the remote ANSWER.
+
+  // FOR THE PEER RECEIVING THE CALL
+  // SetRemoteDescription with the remote OFFER.
+
+  std::unique_ptr<webrtc::SessionDescriptionInterface> desc =
+    webrtc::CreateSessionDescription(type, string_sdp);
+
+  peer_connection->SetRemoteDescription(
+    ptr_ssdo, // if an ssdo isn't needed, you can use DummySetSessionDescriptionObserver::Create()
+    desc.release()
+  );
+  ////////////////////////////////////////////////////////////////////
+  if (isOffer)
+  {
+      // 4. Generate an answer to the remote offer by calling CreateAnswer and send it
+      // back to the remote peer.
+      /*FOR THE PEER RECEIVING THE CALL*/
+      peer_connection->CreateAnswer(ptr_csdo, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+  }
+
+
 }
 
 void WebRTCPeer::add_ice_candidate(String candidate)
 {
+  // 7. Once a remote candidate is received from the remote peer, provide it to
+  // the PeerConnection by calling AddIceCandidate.
+
   emit_signal("notify", "WebRTCPeer::AddIceCandidate - adding candidate");
   // @TODO AddIceCandidate to candidate
 }
@@ -113,9 +148,4 @@ void WebRTCPeer::add_ice_candidate(String candidate)
 WebRTCPeer::~WebRTCPeer()
 {
   // delete peerConnectionFactory;
-}
-
-void WebRTCPeer::test()
-{
-  int just_some_value = 1337;
 }

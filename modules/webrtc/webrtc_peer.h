@@ -20,9 +20,9 @@ protected:
 
 public:
 
-  void test();
   int host_call();
-  void set_remote_description(String sdp);
+  int listen_for_call();
+  void set_remote_description(String sdp, bool isOffer);
   void add_ice_candidate(String candidate);
 
   WebRTCPeer();
