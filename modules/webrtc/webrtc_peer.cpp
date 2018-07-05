@@ -15,6 +15,7 @@ void WebRTCPeer::_bind_methods()
   ClassDB::bind_method(D_METHOD("test"), &WebRTCPeer::test);
   ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeer::host_call);
   ClassDB::bind_method(D_METHOD("set_remote_description", "sdp"), &WebRTCPeer::set_remote_description);
+  ClassDB::bind_method(D_METHOD("add_ice_candidate", "candidate"), &WebRTCPeer::add_ice_candidate);
 
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
   ADD_SIGNAL(MethodInfo("offer_created", PropertyInfo(Variant::STRING, "sdp")));
@@ -98,11 +99,16 @@ void WebRTCPeer::set_remote_description(String sdp)
   // 6. Once an answer is received from the remote peer, call
   // SetRemoteDescription with the remote answer.
 
-  //set the remote description to sdp
-  emit_signal("notify", "WebRTCPeer::SetRemoteDescription - setting");
+  emit_signal("notify", "WebRTCPeer::SetRemoteDescription - setting description");
+
+  // @TODO SetRemoteDescription to sdp
 }
 
-// void WebRTCPeer::add_ice_candidate
+void WebRTCPeer::add_ice_candidate(String candidate)
+{
+  emit_signal("notify", "WebRTCPeer::AddIceCandidate - adding candidate");
+  // @TODO AddIceCandidate to candidate
+}
 
 WebRTCPeer::~WebRTCPeer()
 {
