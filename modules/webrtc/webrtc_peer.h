@@ -2,6 +2,7 @@
 #define WEBRTC_PEER_H
 
 #include <iostream> //remove eventually
+#include "core/ustring.h"
 #include "reference.h"
 #include "api/peerconnectioninterface.h"
 // #include "gd_peer_connection_observer.h"
@@ -18,31 +19,24 @@ protected:
     static void _bind_methods();
 
 public:
-  // enum WebRTCError {
-  //  CANNOT_CREATE_PEER_CONNECTION_FACTORY,
-  //  MODE_SECOND
-  // };
 
-  // rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> peer_connection_factory;
+
   void test();
   int host_call();
-
-  // GodotPeerConnectionObserver pco;
+  void set_remote_description(String sdp);
 
   WebRTCPeer();
   ~WebRTCPeer();
 // };
 
 /** PeerConnectionObserver callback functions **/
-
-  // Triggered when the SignalingState changes.
   class GD_PCO : public webrtc::PeerConnectionObserver {
-    // friend class WebRTCPeer;
   public:
     WebRTCPeer* parent;
 
     GD_PCO(WebRTCPeer* parent);
 
+    // Triggered when the SignalingState changes.
     void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) override;
 
     // Triggered when media is received on a new stream from remote peer.
@@ -81,6 +75,7 @@ public:
 
     // void AddRef()
   };
+  /** DataChannelObserver callback functions **/
   class GD_DCO : public webrtc::DataChannelObserver {
   public:
     GD_DCO();
@@ -90,6 +85,7 @@ public:
     void OnBufferedAmountChange(uint64_t previous_amount) override;
   };
 
+  /** SetSessionDescriptionObserver callback functions **/
   class GD_SSDO : public webrtc::SetSessionDescriptionObserver {
   // public:
     void OnSuccess() override;

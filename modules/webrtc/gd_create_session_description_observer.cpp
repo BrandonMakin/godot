@@ -1,5 +1,4 @@
 #include "webrtc_peer.h"
-#include "core/ustring.h"
 
 WebRTCPeer::GD_CSDO::GD_CSDO(WebRTCPeer* parent)
 {

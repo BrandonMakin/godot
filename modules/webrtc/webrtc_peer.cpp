@@ -14,6 +14,8 @@ void WebRTCPeer::_bind_methods()
 
   ClassDB::bind_method(D_METHOD("test"), &WebRTCPeer::test);
   ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeer::host_call);
+  ClassDB::bind_method(D_METHOD("set_remote_description", "sdp"), &WebRTCPeer::set_remote_description);
+
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
   ADD_SIGNAL(MethodInfo("offer_created", PropertyInfo(Variant::STRING, "sdp")));
 }
@@ -99,6 +101,12 @@ int WebRTCPeer::host_call() {
   // the PeerConnection by calling AddIceCandidate.
   //
   return 0;
+}
+
+void WebRTCPeer::set_remote_description(String sdp)
+{
+  //set remote description to sdp
+  emit_signal("notify", "WebRTCPeer::SetRemoteDescription");
 }
 
 WebRTCPeer::~WebRTCPeer()
