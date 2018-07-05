@@ -15,7 +15,7 @@ void WebRTCPeer::_bind_methods()
   ClassDB::bind_method(D_METHOD("test"), &WebRTCPeer::test);
   ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeer::host_call);
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
-  ADD_SIGNAL(MethodInfo("offer_created", PropertyInfo(Variant::STRING, "secret message")));
+  ADD_SIGNAL(MethodInfo("offer_created", PropertyInfo(Variant::STRING, "sdp")));
 }
 
 WebRTCPeer::WebRTCPeer() :  pco(this)

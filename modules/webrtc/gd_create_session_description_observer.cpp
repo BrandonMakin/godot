@@ -1,4 +1,5 @@
 #include "webrtc_peer.h"
+#include "core/ustring.h"
 
 WebRTCPeer::GD_CSDO::GD_CSDO(WebRTCPeer* parent)
 {
@@ -19,7 +20,7 @@ void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   //Serialize:
   std::string sdp; // sdp = session description protocol
   desc->ToString(&sdp);
-  parent->emit_signal("offer_created", sdp);
+  parent->emit_signal("offer_created", sdp.c_str());
 
 };
 
