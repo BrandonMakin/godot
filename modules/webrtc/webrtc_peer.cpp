@@ -69,7 +69,9 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
 
   // 3. Create local MediaStreamTracks using the PeerConnectionFactory and add
   // them to PeerConnection by calling AddTrack (or legacy method, AddStream).
+  webrtc::DataChannelInit data_channel_config;
   data_channel = peer_connection->CreateDataChannel("channel", &data_channel_config);
+  data_channel->RegisterObserver(&dco);
 }
 
 int WebRTCPeer::host_call() {
@@ -107,7 +109,7 @@ int WebRTCPeer::listen_for_call() {
 
 void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
 {
-  std::string string_sdp = sdp.utf8();
+  std::string string_sdp = sdp.utf8().get_data();
   webrtc::SdpType type = (isOffer) ? webrtc::SdpType::kOffer : webrtc::SdpType::kAnswer;
   // FOR THE PEER MAKING THE CALL
   // SetRemoteDescription with the remote ANSWER.

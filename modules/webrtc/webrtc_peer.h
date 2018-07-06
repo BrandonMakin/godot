@@ -102,7 +102,6 @@ public:
 
   // std::unique_ptr<rtc::Thread> signaling_thread;
   rtc::Thread* signaling_thread;
-  webrtc::DataChannelInit data_channel_config;
 
 
   GD_PCO pco;
