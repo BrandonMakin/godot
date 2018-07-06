@@ -7,7 +7,7 @@ WebRTCPeer::GD_PCO::GD_PCO(WebRTCPeer* parent)
 
 void WebRTCPeer::GD_PCO::OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state)
 {
-  parent->emit_signal("notify", "PeerConnectionObserver::OnSignalingChange");
+  parent->emit_signal("notify", "PeerConnectionObserver::OnSignalingChange - doing nothing");
   // std::cout << "OnSignalingChange" << std::endl;
 }
 

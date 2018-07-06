@@ -17,13 +17,13 @@ void WebRTCPeer::_bind_methods()
   ClassDB::bind_method(D_METHOD("add_ice_candidate", "candidate"), &WebRTCPeer::add_ice_candidate);
 
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
-  ADD_SIGNAL(MethodInfo("offer_created", PropertyInfo(Variant::STRING, "sdp")));
+  ADD_SIGNAL(MethodInfo("offer_created", PropertyInfo(Variant::STRING, "type"), PropertyInfo(Variant::STRING, "sdp")));
   // ADD_SIGNAL(MethodInfo("new_ice_candidate", PropertyInfo(Variant::STRING, "candidate")));
 }
 
 WebRTCPeer::WebRTCPeer() :  pco(this)
                             , ptr_csdo(new rtc::RefCountedObject<GD_CSDO>(this))
-                            , ptr_ssdo(new rtc::RefCountedObject<GD_SSDO>())
+                            , ptr_ssdo(new rtc::RefCountedObject<GD_SSDO>(this))
                             // , signalling_thread(new rtc::Thread)
 {
   // 1. Create a PeerConnectionFactoryInterface.
@@ -107,8 +107,6 @@ int WebRTCPeer::listen_for_call() {
 
 void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
 {
-  emit_signal("notify", "WebRTCPeer::SetRemoteDescription - setting description");
-
   std::string string_sdp = sdp.utf8();
   webrtc::SdpType type = (isOffer) ? webrtc::SdpType::kOffer : webrtc::SdpType::kAnswer;
   // FOR THE PEER MAKING THE CALL
@@ -133,7 +131,9 @@ void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
       peer_connection->CreateAnswer(ptr_csdo, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
   }
 
-
+  std::string message = "WebRTCPeer::SetRemoteDescription - setting description to ";
+  message += (isOffer) ? "Offer" : "Answer";
+  emit_signal("notify", message.c_str());
 }
 
 void WebRTCPeer::add_ice_candidate(String candidate)

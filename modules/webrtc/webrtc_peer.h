@@ -75,6 +75,7 @@ public:
 
     // void AddRef()
   };
+
   /** DataChannelObserver callback functions **/
   class GD_DCO : public webrtc::DataChannelObserver {
   public:
@@ -87,7 +88,9 @@ public:
 
   /** SetSessionDescriptionObserver callback functions **/
   class GD_SSDO : public webrtc::SetSessionDescriptionObserver {
-  // public:
+  public:
+    WebRTCPeer* parent;
+    GD_SSDO(WebRTCPeer* parent);
     void OnSuccess() override;
     void OnFailure(const std::string& error) override;
   };
