@@ -20,6 +20,9 @@ void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   std::string sdp; // sdp = session description protocol
   desc->ToString(&sdp);
   parent->emit_signal("offer_created", desc->type().c_str(), sdp.c_str());
+
+  std::cout << "state: " << parent->peer_connection->signaling_state() << std::endl;
+
 };
 
 void WebRTCPeer::GD_CSDO::OnFailure(const std::string& error) {

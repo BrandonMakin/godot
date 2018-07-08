@@ -15,6 +15,8 @@ void WebRTCPeer::_bind_methods()
   ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeer::host_call);
   ClassDB::bind_method(D_METHOD("set_remote_description", "sdp", "isOffer"), &WebRTCPeer::set_remote_description);
   ClassDB::bind_method(D_METHOD("add_ice_candidate", "candidate"), &WebRTCPeer::add_ice_candidate);
+  ClassDB::bind_method(D_METHOD("send_message", "message"), &WebRTCPeer::send_message);
+  ClassDB::bind_method(D_METHOD("get_statename"), &WebRTCPeer::get_state);
 
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
   ADD_SIGNAL(MethodInfo("offer_created", PropertyInfo(Variant::STRING, "type"), PropertyInfo(Variant::STRING, "sdp")));
@@ -52,8 +54,8 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
 
   webrtc::PeerConnectionInterface::IceServer ice_server;
 
-  configuration.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;  // Temporary @TODO look this line up
-  configuration.enable_dtls_srtp = true;                             // Temporary @TODO look this line up
+  // configuration.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;  // Temporary @TODO look this line up
+  // configuration.enable_dtls_srtp = true;                             // Temporary @TODO look this line up
 
   ice_server.uri = "stun:stun.l.google.com:19302";
   configuration.servers.push_back(ice_server); // add ice_server to configuration
@@ -70,6 +72,9 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
   // 3. Create local MediaStreamTracks using the PeerConnectionFactory and add
   // them to PeerConnection by calling AddTrack (or legacy method, AddStream).
   webrtc::DataChannelInit data_channel_config;
+  data_channel_config.negotiated = true; // True if the channel has been externally negotiated
+  data_channel_config.id = 0;
+
   data_channel = peer_connection->CreateDataChannel("channel", &data_channel_config);
   data_channel->RegisterObserver(&dco);
 }
@@ -109,6 +114,8 @@ int WebRTCPeer::listen_for_call() {
 
 void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
 {
+  std::cout << "state: " << peer_connection->signaling_state() << std::endl;
+
   std::string string_sdp = sdp.utf8().get_data();
   webrtc::SdpType type = (isOffer) ? webrtc::SdpType::kOffer : webrtc::SdpType::kAnswer;
   // FOR THE PEER MAKING THE CALL
@@ -145,6 +152,37 @@ void WebRTCPeer::add_ice_candidate(String candidate)
 
   emit_signal("notify", "WebRTCPeer::AddIceCandidate - adding candidate");
   // @TODO AddIceCandidate to candidate
+}
+
+void WebRTCPeer::send_message(String msg)
+{
+  std::string string_msg = msg.utf8().get_data();
+  webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(string_msg.c_str(), string_msg.size()), true);
+  std::cout << "Send(" << data_channel->state() << ")" << std::endl;
+  // std::cout << "[kConnecting = " << webrtc::DataChannelInterface::DataState.kConnecting << "]\n";
+  data_channel->Send(buffer);
+}
+
+void WebRTCPeer::get_state()
+{
+  std::cout << "state: " << peer_connection->signaling_state() << std::endl;
+  // String statename = ":(";
+  // switch (state)
+  // {
+  //   case webrtc::PeerConnectionInterface::SignalingState.kStable:
+  //     statename = "kStable";
+  //   case kHaveLocalOffer:
+  //     statename = "kHaveLocalOffer";
+  //   case kHaveLocalPrAnswer:
+  //     statename = "kHaveLocalPrAnswer";
+  //   case kHaveRemoteOffer:
+  //     statename = "kHaveRemoteOffer";
+  //   case kHaveRemotePrAnswer:
+  //     statename = "kHaveRemotePrAnswer";
+  //   case kClosed:
+  //     statename = "kClosed";
+  // }
+  // return "" + state;
 }
 
 WebRTCPeer::~WebRTCPeer()
