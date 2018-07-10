@@ -1,20 +1,24 @@
 #include "webrtc_peer.h"
 
-//debug output was temporarily taken from that main.cpp file
-WebRTCPeer::GD_DCO::GD_DCO()
+
+WebRTCPeer::GD_DCO::GD_DCO(WebRTCPeer* parent)
 {
-  std::cout << "DataChannelObserver::Constructor\n";
+  this->parent = parent;
 }
 
 void WebRTCPeer::GD_DCO::OnStateChange() {
-  std::cout << "DataChannelObserver::StateChange" << std::endl;
+  parent->emit_signal("notify", "DataChannelObserver::OnStateChange");
+  //@TODO notify what the new DataChannel state is.
 };
 
 void WebRTCPeer::GD_DCO::OnMessage(const webrtc::DataBuffer& buffer) {
-  std::cout << "DataChannelObserver::Message" << std::endl;
-  std::cout << std::string(buffer.data.data<char>(), buffer.data.size()) << std::endl;
+  String message = std::string(buffer.data.data<char>(), buffer.data.size()).c_str();
+  parent->emit_signal("new_peer_message", message);
 };
 
 void WebRTCPeer::GD_DCO::OnBufferedAmountChange(uint64_t previous_amount) {
-  std::cout << "DataChannelObserver::BufferedAmountChange(" << previous_amount << ")" << std::endl;
+  std::string message = "DataChannelObserver::OnBufferedAmountChange - ";
+  // @TODO find a way to send the uint64_t - previous_amount - in the message
+
+  // std::cout << "DataChannelObserver::OnBufferedAmountChange(" << previous_amount << ")" << std::endl;
 };

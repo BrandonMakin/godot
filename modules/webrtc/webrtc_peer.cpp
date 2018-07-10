@@ -24,7 +24,8 @@ void WebRTCPeer::_bind_methods()
     ), &WebRTCPeer::add_ice_candidate
   );
 
-  ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
+  ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "message")));
+  ADD_SIGNAL(MethodInfo("new_peer_message", PropertyInfo(Variant::STRING, "message")));
   ADD_SIGNAL(MethodInfo("offer_created",
                         PropertyInfo(Variant::STRING, "type"),
                         PropertyInfo(Variant::STRING, "sdp")
@@ -39,7 +40,7 @@ void WebRTCPeer::_bind_methods()
 WebRTCPeer::WebRTCPeer() :  pco(this)
                             , ptr_csdo(new rtc::RefCountedObject<GD_CSDO>(this))
                             , ptr_ssdo(new rtc::RefCountedObject<GD_SSDO>(this))
-                            // , signalling_thread(new rtc::Thread)
+                            , dco(this)
 {
   // 1. Create a PeerConnectionFactoryInterface.
   signaling_thread = new rtc::Thread;
@@ -176,9 +177,11 @@ void WebRTCPeer::add_ice_candidate(String sdpMidName, int sdpMlineIndexName, Str
     error
   );
   // @TODO do something if there's an error (if error, or if !candidate)
+  if (error || !candidate)
+    std::cout << "ERROR with creating ICE candidate (" << error << ")\n";
 
-  // @TODO [DONE] AddIceCandidate to candidate with:
-  peer_connection->AddIceCandidate(candidate);
+  if (!peer_connection->AddIceCandidate(candidate))
+    emit_signal("notify", "error with adding ICE candidate");
   // @TODO do something if there's an error adding the candidate [if (!peer_connection->AddIceCandidate(candidate))]
 }
 

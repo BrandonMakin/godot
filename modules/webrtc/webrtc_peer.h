@@ -72,21 +72,19 @@ public:
     WebRTCPeer* parent;
 
     GD_CSDO(WebRTCPeer* parent);
-
     void OnSuccess(webrtc::SessionDescriptionInterface* desc) override;
-
     void OnFailure(const std::string& error) override;
-
     // void AddRef()
   };
 
   /** DataChannelObserver callback functions **/
   class GD_DCO : public webrtc::DataChannelObserver {
   public:
-    GD_DCO();
+    WebRTCPeer* parent;
+
+    GD_DCO(WebRTCPeer* parent);
     void OnStateChange() override;
     void OnMessage(const webrtc::DataBuffer& buffer) override;
-
     void OnBufferedAmountChange(uint64_t previous_amount) override;
   };
 
