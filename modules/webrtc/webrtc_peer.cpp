@@ -14,13 +14,26 @@ void WebRTCPeer::_bind_methods()
 
   ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeer::host_call);
   ClassDB::bind_method(D_METHOD("set_remote_description", "sdp", "isOffer"), &WebRTCPeer::set_remote_description);
-  ClassDB::bind_method(D_METHOD("add_ice_candidate", "candidate"), &WebRTCPeer::add_ice_candidate);
   ClassDB::bind_method(D_METHOD("send_message", "message"), &WebRTCPeer::send_message);
-  ClassDB::bind_method(D_METHOD("get_statename"), &WebRTCPeer::get_state);
+  ClassDB::bind_method(D_METHOD("get_state_peer_connection"), &WebRTCPeer::get_state_peer_connection);
+  ClassDB::bind_method(
+    D_METHOD( "add_ice_candidate",
+              "candidateSdpMidName",
+              "candidateSdpMlineIndexName",
+              "candidateSdpName"
+    ), &WebRTCPeer::add_ice_candidate
+  );
 
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "secret message")));
-  ADD_SIGNAL(MethodInfo("offer_created", PropertyInfo(Variant::STRING, "type"), PropertyInfo(Variant::STRING, "sdp")));
-  // ADD_SIGNAL(MethodInfo("new_ice_candidate", PropertyInfo(Variant::STRING, "candidate")));
+  ADD_SIGNAL(MethodInfo("offer_created",
+                        PropertyInfo(Variant::STRING, "type"),
+                        PropertyInfo(Variant::STRING, "sdp")
+  ));
+  ADD_SIGNAL(MethodInfo("new_ice_candidate",
+                        PropertyInfo(Variant::STRING, "candidateSdpMidName"),
+                        PropertyInfo(Variant::INT, "candidateSdpMlineIndexName"),
+                        PropertyInfo(Variant::STRING, "candidateSdpName")
+  ));
 }
 
 WebRTCPeer::WebRTCPeer() :  pco(this)
@@ -80,6 +93,7 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
 }
 
 int WebRTCPeer::host_call() {
+  name = "caller";
   emit_signal("notify", "WebRTCPeer::host_call");
 
   // 4. Create an offer, call SetLocalDescription with it, serialize it, and send
@@ -114,7 +128,9 @@ int WebRTCPeer::listen_for_call() {
 
 void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
 {
-  std::cout << "state: " << peer_connection->signaling_state() << std::endl;
+  std::cout << name << " state: " << peer_connection->signaling_state() << std::endl;
+  // emit_signal("notify", "state: " + peer_connection->signaling_state());
+
 
   std::string string_sdp = sdp.utf8().get_data();
   webrtc::SdpType type = (isOffer) ? webrtc::SdpType::kOffer : webrtc::SdpType::kAnswer;
@@ -145,13 +161,25 @@ void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
   emit_signal("notify", message.c_str());
 }
 
-void WebRTCPeer::add_ice_candidate(String candidate)
+void WebRTCPeer::add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName)
 {
   // 7. Once a remote candidate is received from the remote peer, provide it to
   // the PeerConnection by calling AddIceCandidate.
 
-  emit_signal("notify", "WebRTCPeer::AddIceCandidate - adding candidate");
-  // @TODO AddIceCandidate to candidate
+  emit_signal("notify", "WebRTCPeer::add_ice_candidate - adding candidate");
+  // @TODO [DONE] covert String candidate to a webrtc::IceCandidateInterface*, I think
+  webrtc::SdpParseError *error = nullptr;
+  webrtc::IceCandidateInterface *candidate = webrtc::CreateIceCandidate(
+    sdpMidName.utf8().get_data(),
+    sdpMlineIndexName,
+    sdpName.utf8().get_data(),
+    error
+  );
+  // @TODO do something if there's an error (if error, or if !candidate)
+
+  // @TODO [DONE] AddIceCandidate to candidate with:
+  peer_connection->AddIceCandidate(candidate);
+  // @TODO do something if there's an error adding the candidate [if (!peer_connection->AddIceCandidate(candidate))]
 }
 
 void WebRTCPeer::send_message(String msg)
@@ -163,9 +191,12 @@ void WebRTCPeer::send_message(String msg)
   data_channel->Send(buffer);
 }
 
-void WebRTCPeer::get_state()
+void WebRTCPeer::get_state_peer_connection()
 {
-  std::cout << "state: " << peer_connection->signaling_state() << std::endl;
+  std::cout << name << "- peer connection state: " << peer_connection->signaling_state() << std::endl;
+  // emit_signal("notify", "state: " + peer_connection->signaling_state());
+
+
   // String statename = ":(";
   // switch (state)
   // {

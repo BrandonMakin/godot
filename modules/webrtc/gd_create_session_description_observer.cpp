@@ -6,6 +6,9 @@ WebRTCPeer::GD_CSDO::GD_CSDO(WebRTCPeer* parent)
 }
 
 void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
+  std::cout << parent->name << " state: " << parent->peer_connection->signaling_state() << std::endl;
+ // parent->emit_signal("notify", "state: " + parent->peer_connection->signaling_state());
+
   std::string message = "CreateSessionDescriptionObserver::OnSuccess - Creating ";
   message += desc->type() + " & setting local description";
   parent->emit_signal("notify", message.c_str());
@@ -21,7 +24,8 @@ void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   desc->ToString(&sdp);
   parent->emit_signal("offer_created", desc->type().c_str(), sdp.c_str());
 
-  std::cout << "state: " << parent->peer_connection->signaling_state() << std::endl;
+  std::cout << parent->name << " state: " << parent->peer_connection->signaling_state() << std::endl;
+  // parent->emit_signal("notify", "state: " + parent->peer_connection->signaling_state());
 
 };
 

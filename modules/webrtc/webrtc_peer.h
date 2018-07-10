@@ -20,12 +20,13 @@ protected:
 
 public:
 
+  std::string name = "receiver";
   int host_call();
   int listen_for_call();
   void set_remote_description(String sdp, bool isOffer);
-  void add_ice_candidate(String candidate);
+  void add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName);
   void send_message(String msg);
-  void get_state();
+  void get_state_peer_connection();
 
 
   WebRTCPeer();

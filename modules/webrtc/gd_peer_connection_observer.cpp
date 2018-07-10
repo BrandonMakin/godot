@@ -56,12 +56,53 @@ void WebRTCPeer::GD_PCO::OnIceGatheringChange(webrtc::PeerConnectionInterface::I
 
 void WebRTCPeer::GD_PCO::OnIceCandidate(const webrtc::IceCandidateInterface* candidate)
 {
-  parent->emit_signal("notify", "PeerConnectionObserver::OnIceCandidate [warning: won't send ice candidates]");
   // std::cout << "OnIceCandidate " << std::endl;
 
   // 5. Once an ICE candidate has been gathered, the PeerConnection will call the
   // observer function OnIceCandidate. The candidates must also be serialized and
-  // sent to the remote peer.
+  // sent to the remote peer. That peer will add the new ice candidate by calling
+  // PeerConnection->AddIceCandidate(candidate);
 
+
+  // TODO Put the following three strings in a Godot dictionary
+  // and emit it as a signal with that dictionary as the argument
+  Dictionary candidateSDP;
+
+  String candidateSdpMidName = candidate->sdp_mid().c_str();
+  int candidateSdpMlineIndexName = candidate->sdp_mline_index();
+  std::string sdp;
+  candidate->ToString(&sdp);
+  String candidateSdpName = sdp.c_str();
+
+  // message += "SDP MidName = " + candidateSdpMidName;
+  // message += ", SDP MlineIndexName = " + candidateSdpMlineIndexName;
+  // message += ", SDP name = " + candidateSdpName;
+  parent->emit_signal("new_ice_candidate",
+                      candidateSdpMidName,
+                      candidateSdpMlineIndexName,
+                      candidateSdpName
+  );
+
+  ////////////////////////////////////////////////////////////////////////////
+  // RTC_LOG(INFO) << __FUNCTION__ << " " << candidate->sdp_mline_index();
+  // // For loopback test. To save some connecting delay.
+  // if (loopback_) {
+  //   if (!peer_connection->AddIceCandidate(candidate)) {
+  //     RTC_LOG(WARNING) << "Failed to apply the received candidate";
+  //   }
+  //   return;
+  // }
+  // Json::StyledWriter writer;
+  // Json::Value jmessage;
+  // jmessage[kCandidateSdpMidName] = candidate->sdp_mid();
+  // jmessage[kCandidateSdpMlineIndexName] = candidate->sdp_mline_index();
+  // std::string sdp;
+  // if (!candidate->ToString(&sdp)) {
+  //   RTC_LOG(LS_ERROR) << "Failed to serialize candidate";
+  //   return;
+  // }
+  // jmessage[kCandidateSdpName] = sdp;
+  //----------------------------------------------------------------------
+  // SendMessage(writer.write(jmessage));
 
 }
