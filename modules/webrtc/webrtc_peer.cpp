@@ -111,22 +111,6 @@ int WebRTCPeer::host_call() {
   return 0;
 }
 
-int WebRTCPeer::listen_for_call() {
-  // If the application decides to accept the call, it should:
-  //
-  //
-  //
-  // 5. Provide the local answer to the new PeerConnection by calling
-  // SetLocalDescription with the answer.
-  //
-  // 6. Provide the remote ICE candidates by calling AddIceCandidate.
-  //
-  // 7. Once a candidate has been gathered, the PeerConnection will call the
-  // observer function OnIceCandidate. Send these candidates to the remote peer.
-
-    return 0;
-}
-
 void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
 {
   std::cout << name << " state: " << peer_connection->signaling_state() << std::endl;
