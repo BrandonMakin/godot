@@ -2,6 +2,7 @@
 #define WEBRTC_PEER_H
 
 #include <iostream> //remove eventually
+// #include "core/os/mutex.h"
 #include "core/ustring.h"
 #include "reference.h"
 #include "api/peerconnectioninterface.h"
@@ -20,9 +21,13 @@ protected:
 
 public:
 
+  // Mutex *mutex; // mutex = Mutex::create(true);
+
   std::string name = "receiver";
-  int host_call();
+  int create_offer();
   void set_remote_description(String sdp, bool isOffer);
+  void set_local_description(String sdp, bool isOffer);
+  void set_description(String sdp, bool isOffer, bool isLocal);
   void add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName);
   void send_message(String msg);
   void get_state_peer_connection();

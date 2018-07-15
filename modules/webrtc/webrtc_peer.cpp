@@ -12,7 +12,8 @@
 void WebRTCPeer::_bind_methods()
 {
 
-  ClassDB::bind_method(D_METHOD("host_call"), &WebRTCPeer::host_call);
+  ClassDB::bind_method(D_METHOD("create_offer"), &WebRTCPeer::create_offer);
+  ClassDB::bind_method(D_METHOD("set_local_description", "sdp", "isOffer"), &WebRTCPeer::set_local_description);
   ClassDB::bind_method(D_METHOD("set_remote_description", "sdp", "isOffer"), &WebRTCPeer::set_remote_description);
   ClassDB::bind_method(D_METHOD("send_message", "message"), &WebRTCPeer::send_message);
   ClassDB::bind_method(D_METHOD("get_state_peer_connection"), &WebRTCPeer::get_state_peer_connection);
@@ -93,9 +94,9 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
   data_channel->RegisterObserver(&dco);
 }
 
-int WebRTCPeer::host_call() {
+int WebRTCPeer::create_offer() {
   name = "caller";
-  emit_signal("notify", "WebRTCPeer::host_call");
+  emit_signal("notify", "WebRTCPeer::create_offer");
 
   // 4. Create an offer, call SetLocalDescription with it, serialize it, and send
   // it to the remote peer
@@ -111,7 +112,25 @@ int WebRTCPeer::host_call() {
   return 0;
 }
 
+void WebRTCPeer::set_local_description(String sdp, bool isOffer)
+{
+  set_description(sdp, isOffer, true); // isLocal == true
+}
+
 void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
+{
+  set_description(sdp, isOffer, false); //false meaning !isLocal because it is remote
+
+  if (isOffer)
+  {
+      // 4. Generate an answer to the remote offer by calling CreateAnswer and send it
+      // back to the remote peer.
+      /*FOR THE PEER RECEIVING THE CALL*/
+      peer_connection->CreateAnswer(ptr_csdo, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+  }
+}
+
+void WebRTCPeer::set_description(String sdp, bool isOffer, bool isLocal)
 {
   std::cout << name << " state: " << peer_connection->signaling_state() << std::endl;
   // emit_signal("notify", "state: " + peer_connection->signaling_state());
@@ -128,18 +147,20 @@ void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
   std::unique_ptr<webrtc::SessionDescriptionInterface> desc =
     webrtc::CreateSessionDescription(type, string_sdp);
 
-  peer_connection->SetRemoteDescription(
-    ptr_ssdo, // if an ssdo isn't needed, you can use DummySetSessionDescriptionObserver::Create()
-    desc.release()
-  );
-  ////////////////////////////////////////////////////////////////////
-  if (isOffer)
+  if (isLocal)
   {
-      // 4. Generate an answer to the remote offer by calling CreateAnswer and send it
-      // back to the remote peer.
-      /*FOR THE PEER RECEIVING THE CALL*/
-      peer_connection->CreateAnswer(ptr_csdo, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+    peer_connection->SetLocalDescription(
+      ptr_ssdo, // if an ssdo isn't needed, you can use DummySetSessionDescriptionObserver::Create()
+      desc.release()
+    );
+  } else
+  {
+    peer_connection->SetRemoteDescription(
+      ptr_ssdo, // if an ssdo isn't needed, you can use DummySetSessionDescriptionObserver::Create()
+      desc.release()
+    );
   }
+  ////////////////////////////////////////////////////////////////////
 
   std::string message = "WebRTCPeer::SetRemoteDescription - setting description to ";
   message += (isOffer) ? "Offer" : "Answer";

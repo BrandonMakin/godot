@@ -16,8 +16,9 @@ void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   // now that you have your offer, call SetLocalDescription with it,
   // serialize it, and send it to the remote peer
 
-  //call SetLocalDescription:
-  parent->peer_connection->SetLocalDescription(parent->ptr_ssdo, desc);  // if an ssdo isn't needed, you can use DummySetSessionDescriptionObserver::Create()
+  // //call SetLocalDescription:
+  // parent->peer_connection->SetLocalDescription(parent->ptr_ssdo, desc);  // if an ssdo isn't needed, you can use DummySetSessionDescriptionObserver::Create()
+
 
   //Serialize:
   std::string sdp; // sdp = session description protocol
