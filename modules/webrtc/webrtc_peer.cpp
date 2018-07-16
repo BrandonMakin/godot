@@ -210,11 +210,13 @@ void WebRTCPeer::send_message(String msg)
 
 void WebRTCPeer::poll()
 {
+  mutex_signal_queue->lock();
   while (!signal_queue.empty())
   {
     signal_queue.front()();
     signal_queue.pop();
   }
+  mutex_signal_queue->unlock();
 }
 
 void WebRTCPeer::queue_signal(StringName p_name, VARIANT_ARG_DECLARE)

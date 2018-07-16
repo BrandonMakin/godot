@@ -1,3 +1,5 @@
+// UNUSED - ALMOST DEFINITELY, THIS WILL BE DELETED EVENTUALLY
+
 #include "queued_signal.h"
 
 QueuedSignal::QueuedSignal(Object* parent_, const StringName &p_name_, VARIANT_ARG_DECLARE) : // parent(parent_),
