@@ -4,7 +4,7 @@
 // #include "queued_signal.h"
 #include <functional>   // std::function
 #include <iostream> //remove eventually
-// #include "core/os/mutex.h"
+#include "os/mutex.h" // mutex // necessary to include this? it seemed to work find without including
 #include "ustring.h"
 #include "reference.h"
 #include "api/peerconnectioninterface.h"
@@ -22,7 +22,7 @@ protected:
 
 public:
 
-  // Mutex *mutex; // mutex = Mutex::create(true);
+  Mutex *mutex;
 
   std::string name = "receiver";
   std::queue< std::function<void()> > signal_queue;
