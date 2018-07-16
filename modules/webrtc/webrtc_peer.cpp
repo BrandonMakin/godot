@@ -1,5 +1,4 @@
 #include "webrtc_peer.h"
-#include "media/base/mediaengine.h"
 
 // #include "api/audio_codecs/builtin_audio_decoder_factory.h"
 // #include "api/audio_codecs/builtin_audio_encoder_factory.h"
@@ -44,7 +43,7 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
                             , ptr_ssdo(new rtc::RefCountedObject<GD_SSDO>(this))
                             , dco(this)
 {
-  mutex = Mutex::create(true);
+  mutex_signal_queue = Mutex::create(true);
 
   // 1. Create a PeerConnectionFactoryInterface.
   signaling_thread = new rtc::Thread;
@@ -220,13 +219,13 @@ void WebRTCPeer::poll()
 
 void WebRTCPeer::queue_signal(StringName p_name, VARIANT_ARG_DECLARE)
 {
-  mutex->lock();
+  mutex_signal_queue->lock();
   signal_queue.push(
     [this, p_name, VARIANT_ARG_PASS]{
       emit_signal(p_name, VARIANT_ARG_PASS);
     }
   );
-  mutex->unlock();
+  mutex_signal_queue->unlock();
 }
 
 
@@ -258,6 +257,6 @@ void WebRTCPeer::get_state_peer_connection()
 WebRTCPeer::~WebRTCPeer()
 {
   // delete peerConnectionFactory;
-  memdelete(mutex);
-  mutex = NULL;
+  memdelete(mutex_signal_queue);
+  mutex_signal_queue = NULL;
 }

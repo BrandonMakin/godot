@@ -3,18 +3,14 @@
 
 // #include "queued_signal.h"
 #include <functional>   // std::function
-#include <iostream> //remove eventually
-#include "os/mutex.h" // mutex // necessary to include this? it seemed to work find without including
-#include "ustring.h"
+#include <iostream>     // remove eventually
+#include "os/mutex.h"   // mutex // necessary to include this? it seemed to work find without including
+#include "ustring.h"    // String
 #include "reference.h"
 #include "api/peerconnectioninterface.h"
-// #include "gd_peer_connection_observer.h"
-// #include "thirdparty/webrtc/api/peerconnectioninterface.h"
-
+#include "media/base/mediaengine.h"       // needed for CreateModularPeerConnectionFactory
 
 class WebRTCPeer : public Reference {
-                                    // public webrtc::PeerConnectionObserver,
-                                    // public webrtc::CreateSessionDescriptionObserver {
   GDCLASS(WebRTCPeer, Reference);
 
 protected:
@@ -22,7 +18,7 @@ protected:
 
 public:
 
-  Mutex *mutex;
+  Mutex *mutex_signal_queue;
 
   std::string name = "receiver";
   std::queue< std::function<void()> > signal_queue;
@@ -35,13 +31,11 @@ public:
   void send_message(String msg);
   void get_state_peer_connection();
   void poll();
-
   void queue_signal(StringName p_name, VARIANT_ARG_LIST);
-
 
   WebRTCPeer();
   ~WebRTCPeer();
-// };
+
 
 /** PeerConnectionObserver callback functions **/
   class GD_PCO : public webrtc::PeerConnectionObserver {
@@ -84,7 +78,6 @@ public:
     GD_CSDO(WebRTCPeer* parent);
     void OnSuccess(webrtc::SessionDescriptionInterface* desc) override;
     void OnFailure(const std::string& error) override;
-    // void AddRef()
   };
 
   /** DataChannelObserver callback functions **/
