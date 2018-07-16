@@ -7,11 +7,11 @@ WebRTCPeer::GD_CSDO::GD_CSDO(WebRTCPeer* parent)
 
 void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   std::cout << parent->name << " state: " << parent->peer_connection->signaling_state() << std::endl;
- // parent->emit_signal("notify", "state: " + parent->peer_connection->signaling_state());
+ // parent->queue_signal("notify", "state: " + parent->peer_connection->signaling_state());
 
   std::string message = "CreateSessionDescriptionObserver::OnSuccess - Creating ";
   message += desc->type() + " & setting local description";
-  parent->emit_signal("notify", message.c_str());
+  parent->queue_signal("notify", message.c_str());
 
   // now that you have your offer, call SetLocalDescription with it,
   // serialize it, and send it to the remote peer
@@ -23,15 +23,15 @@ void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   //Serialize:
   std::string sdp; // sdp = session description protocol
   desc->ToString(&sdp);
-  parent->emit_signal("offer_created", desc->type().c_str(), sdp.c_str());
+  parent->queue_signal("offer_created", desc->type().c_str(), sdp.c_str());
 
   std::cout << parent->name << " state: " << parent->peer_connection->signaling_state() << std::endl;
-  // parent->emit_signal("notify", "state: " + parent->peer_connection->signaling_state());
+  // parent->queue_signal("notify", "state: " + parent->peer_connection->signaling_state());
 
 };
 
 void WebRTCPeer::GD_CSDO::OnFailure(const std::string& error) {
   std::string message = "CreateSessionDescriptionObserver::OnFailure: error = ";
   message += error;
-  parent->emit_signal("notify", message.c_str());
+  parent->queue_signal("notify", message.c_str());
 };

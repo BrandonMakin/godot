@@ -7,31 +7,31 @@ WebRTCPeer::GD_PCO::GD_PCO(WebRTCPeer* parent)
 
 void WebRTCPeer::GD_PCO::OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state)
 {
-  parent->emit_signal("notify", "PeerConnectionObserver::OnSignalingChange - doing nothing");
+  parent->queue_signal("notify", "PeerConnectionObserver::OnSignalingChange - doing nothing");
   // std::cout << "OnSignalingChange" << std::endl;
 }
 
 void WebRTCPeer::GD_PCO::OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
-  parent->emit_signal("notify", "PeerConnectionObserver::OnAddStream");
+  parent->queue_signal("notify", "PeerConnectionObserver::OnAddStream");
   // std::cout << "OnAddStream " << std::endl;
 }
 
 void WebRTCPeer::GD_PCO::OnRemoveStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
-  parent->emit_signal("notify", "PeerConnectionObserver::OnRemoveStream");
+  parent->queue_signal("notify", "PeerConnectionObserver::OnRemoveStream");
   // std::cout << "PeerConnectionObserver::OnRemoveStream " << std::endl;
 }
 
 void WebRTCPeer::GD_PCO::OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel)
 {
-  parent->emit_signal("notify", "PeerConnectionObserver::OnDataChannel");
+  parent->queue_signal("notify", "PeerConnectionObserver::OnDataChannel");
   // std::cout << "PeerConnectionObserver::OnDataChannel " << std::endl;
 }
 
 void WebRTCPeer::GD_PCO::OnRenegotiationNeeded()
 {
-  parent->emit_signal("notify", "PeerConnectionObserver::OnRenegotiationNeeded");
+  parent->queue_signal("notify", "PeerConnectionObserver::OnRenegotiationNeeded");
   // std::cout << "PeerConnectionObserver::OnRenegotiationNeeded" << std::endl;
 
   // parent->peer_connection->CreateOffer(
@@ -44,13 +44,13 @@ void WebRTCPeer::GD_PCO::OnRenegotiationNeeded()
 
 void WebRTCPeer::GD_PCO::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState new_state)
 {
-  parent->emit_signal("notify", "PeerConnectionObserver::OnIceConnectionChange");
+  parent->queue_signal("notify", "PeerConnectionObserver::OnIceConnectionChange");
   // std::cout << "OnIceConnectionChange " << std::endl;
 }
 
 void WebRTCPeer::GD_PCO::OnIceGatheringChange(webrtc::PeerConnectionInterface::IceGatheringState new_state)
 {
-  parent->emit_signal("notify", "PeerConnectionObserver::OnIceGatheringChange");
+  parent->queue_signal("notify", "PeerConnectionObserver::OnIceGatheringChange");
   // std::cout << "OnIceGatheringChange " << std::endl;
 }
 
@@ -77,7 +77,7 @@ void WebRTCPeer::GD_PCO::OnIceCandidate(const webrtc::IceCandidateInterface* can
   // message += "SDP MidName = " + candidateSdpMidName;
   // message += ", SDP MlineIndexName = " + candidateSdpMlineIndexName;
   // message += ", SDP name = " + candidateSdpName;
-  parent->emit_signal("new_ice_candidate",
+  parent->queue_signal("new_ice_candidate",
                       candidateSdpMidName,
                       candidateSdpMlineIndexName,
                       candidateSdpName

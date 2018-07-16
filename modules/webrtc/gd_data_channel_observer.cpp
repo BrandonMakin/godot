@@ -7,13 +7,13 @@ WebRTCPeer::GD_DCO::GD_DCO(WebRTCPeer* parent)
 }
 
 void WebRTCPeer::GD_DCO::OnStateChange() {
-  parent->emit_signal("notify", "DataChannelObserver::OnStateChange");
+  parent->queue_signal("notify", "DataChannelObserver::OnStateChange");
   //@TODO notify what the new DataChannel state is.
 };
 
 void WebRTCPeer::GD_DCO::OnMessage(const webrtc::DataBuffer& buffer) {
   String message = std::string(buffer.data.data<char>(), buffer.data.size()).c_str();
-  parent->emit_signal("new_peer_message", message);
+  parent->queue_signal("new_peer_message", message);
 };
 
 void WebRTCPeer::GD_DCO::OnBufferedAmountChange(uint64_t previous_amount) {

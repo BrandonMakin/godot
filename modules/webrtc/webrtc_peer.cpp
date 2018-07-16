@@ -17,6 +17,7 @@ void WebRTCPeer::_bind_methods()
   ClassDB::bind_method(D_METHOD("set_remote_description", "sdp", "isOffer"), &WebRTCPeer::set_remote_description);
   ClassDB::bind_method(D_METHOD("send_message", "message"), &WebRTCPeer::send_message);
   ClassDB::bind_method(D_METHOD("get_state_peer_connection"), &WebRTCPeer::get_state_peer_connection);
+  ClassDB::bind_method(D_METHOD("poll"), &WebRTCPeer::poll);
   ClassDB::bind_method(
     D_METHOD( "add_ice_candidate",
               "candidateSdpMidName",
@@ -55,9 +56,12 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
     nullptr  // std::unique_ptr<RtcEventLogFactoryInterface> event_log_factory
   );
   if (pc_factory.get() == nullptr)
-    emit_signal("notify", "[FAILURE]: peer connection factory");
+    queue_signal("notify", "[FAILURE]: peer connection factory");
+
+
   else
-    emit_signal("notify", "[success]: peer connection factory");
+    queue_signal("notify", "[success]: peer connection factory");
+
     // return 0xBADFAC; // "bad factory" -> the factory isn't created correctly
 
   // 2. Create a PeerConnection object. Provide a configuration struct which
@@ -79,9 +83,11 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
     configuration, nullptr, nullptr, &pco);
 
   if (peer_connection.get() == nullptr)
-    emit_signal("notify", "[FAILURE]: peer connection");
+    queue_signal("notify", "[FAILURE]: peer connection");
+
   else
-    emit_signal("notify", "[success]: peer connection");
+    queue_signal("notify", "[success]: peer connection");
+
   // return 0xBADC; // "bad connection" -> the peer connection isn't created correctly
 
   // 3. Create local MediaStreamTracks using the PeerConnectionFactory and add
@@ -96,15 +102,12 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
 
 int WebRTCPeer::create_offer() {
   name = "caller";
-  emit_signal("notify", "WebRTCPeer::create_offer");
+  queue_signal("notify", "WebRTCPeer::create_offer");
+
 
   // 4. Create an offer, call SetLocalDescription with it, serialize it, and send
   // it to the remote peer
 
-  // Should I do step 4 in GD_PCO::OnRenegotiationNeeded?
-  // I'm not sure. The example client doesn't even use OnRenegotiationNeeded
-
-  //Create an offer - the rest of step 4 should be in CSDO::OnSuccess
   peer_connection->CreateOffer(
     ptr_csdo, // CreateSessionDescriptionObserver* observer,
     nullptr // webrtc::PeerConnectionInterface::RTCOfferAnswerOptions() // const MediaConstraintsInterface* constraints
@@ -133,7 +136,7 @@ void WebRTCPeer::set_remote_description(String sdp, bool isOffer)
 void WebRTCPeer::set_description(String sdp, bool isOffer, bool isLocal)
 {
   std::cout << name << " state: " << peer_connection->signaling_state() << std::endl;
-  // emit_signal("notify", "state: " + peer_connection->signaling_state());
+  queue_signal("notify", "state: " + peer_connection->signaling_state());
 
 
   std::string string_sdp = sdp.utf8().get_data();
@@ -164,7 +167,8 @@ void WebRTCPeer::set_description(String sdp, bool isOffer, bool isLocal)
 
   std::string message = "WebRTCPeer::SetRemoteDescription - setting description to ";
   message += (isOffer) ? "Offer" : "Answer";
-  emit_signal("notify", message.c_str());
+  queue_signal("notify", message.c_str());
+
 }
 
 void WebRTCPeer::add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName)
@@ -172,7 +176,9 @@ void WebRTCPeer::add_ice_candidate(String sdpMidName, int sdpMlineIndexName, Str
   // 7. Once a remote candidate is received from the remote peer, provide it to
   // the PeerConnection by calling AddIceCandidate.
 
-  emit_signal("notify", "WebRTCPeer::add_ice_candidate - adding candidate");
+  queue_signal("notify", "WebRTCPeer::add_ice_candidate - adding candidate");
+
+
   // @TODO [DONE] covert String candidate to a webrtc::IceCandidateInterface*, I think
   webrtc::SdpParseError *error = nullptr;
   webrtc::IceCandidateInterface *candidate = webrtc::CreateIceCandidate(
@@ -186,7 +192,8 @@ void WebRTCPeer::add_ice_candidate(String sdpMidName, int sdpMlineIndexName, Str
     std::cout << "ERROR with creating ICE candidate (" << error << ")\n";
 
   if (!peer_connection->AddIceCandidate(candidate))
-    emit_signal("notify", "error with adding ICE candidate");
+    queue_signal("notify", "error with adding ICE candidate");
+
   // @TODO do something if there's an error adding the candidate [if (!peer_connection->AddIceCandidate(candidate))]
 }
 
@@ -199,10 +206,29 @@ void WebRTCPeer::send_message(String msg)
   data_channel->Send(buffer);
 }
 
+void WebRTCPeer::poll()
+{
+  while (!signal_queue.empty())
+  {
+    signal_queue.front()();
+    signal_queue.pop();
+  }
+}
+
+void WebRTCPeer::queue_signal(StringName p_name, VARIANT_ARG_DECLARE)
+{
+  signal_queue.push(
+    [this, p_name, VARIANT_ARG_PASS]{
+      emit_signal(p_name, VARIANT_ARG_PASS);
+    }
+  );
+}
+
+
 void WebRTCPeer::get_state_peer_connection()
 {
   std::cout << name << "- peer connection state: " << peer_connection->signaling_state() << std::endl;
-  // emit_signal("notify", "state: " + peer_connection->signaling_state());
+  queue_signal("notify", "state: " + peer_connection->signaling_state());
 
 
   // String statename = ":(";

@@ -1,15 +1,16 @@
 #ifndef WEBRTC_PEER_H
 #define WEBRTC_PEER_H
 
+// #include "queued_signal.h"
+#include <functional>   // std::function
 #include <iostream> //remove eventually
 // #include "core/os/mutex.h"
-#include "core/ustring.h"
+#include "ustring.h"
 #include "reference.h"
 #include "api/peerconnectioninterface.h"
 // #include "gd_peer_connection_observer.h"
 // #include "thirdparty/webrtc/api/peerconnectioninterface.h"
 
-// class GodotPeerConnectionObserver;
 
 class WebRTCPeer : public Reference {
                                     // public webrtc::PeerConnectionObserver,
@@ -24,6 +25,8 @@ public:
   // Mutex *mutex; // mutex = Mutex::create(true);
 
   std::string name = "receiver";
+  std::queue< std::function<void()> > signal_queue;
+
   int create_offer();
   void set_remote_description(String sdp, bool isOffer);
   void set_local_description(String sdp, bool isOffer);
@@ -31,6 +34,9 @@ public:
   void add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName);
   void send_message(String msg);
   void get_state_peer_connection();
+  void poll();
+
+  void queue_signal(StringName p_name, VARIANT_ARG_LIST);
 
 
   WebRTCPeer();
