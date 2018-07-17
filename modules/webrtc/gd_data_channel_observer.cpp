@@ -13,7 +13,8 @@ void WebRTCPeer::GD_DCO::OnStateChange() {
 
 void WebRTCPeer::GD_DCO::OnMessage(const webrtc::DataBuffer& buffer) {
   String message = std::string(buffer.data.data<char>(), buffer.data.size()).c_str();
-  parent->queue_signal("new_peer_message", message);
+  // parent->queue_signal("notify", message);
+  parent->queue_packet(buffer);
 };
 
 void WebRTCPeer::GD_DCO::OnBufferedAmountChange(uint64_t previous_amount) {

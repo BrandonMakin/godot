@@ -7,11 +7,15 @@
 #include "os/mutex.h"   // mutex // necessary to include this? it seemed to work find without including
 #include "ustring.h"    // String
 #include "reference.h"
+#include "io/packet_peer.h"
 #include "api/peerconnectioninterface.h"
 #include "media/base/mediaengine.h"       // needed for CreateModularPeerConnectionFactory
 
-class WebRTCPeer : public Reference {
-  GDCLASS(WebRTCPeer, Reference);
+// class WebRTCPeer : public Reference {
+//   GDCLASS(WebRTCPeer, Reference);
+
+class WebRTCPeer : public PacketPeer {
+  GDCLASS(WebRTCPeer, PacketPeer);
 
 protected:
     static void _bind_methods();
@@ -19,25 +23,36 @@ protected:
 public:
 
   Mutex *mutex_signal_queue;
+  Mutex *mutex_packet_queue;
 
   std::string name = "receiver";
   std::queue< std::function<void()> > signal_queue;
+  std::queue< webrtc::DataBuffer > packet_queue;
 
   int create_offer();
   void set_remote_description(String sdp, bool isOffer);
   void set_local_description(String sdp, bool isOffer);
   void set_description(String sdp, bool isOffer, bool isLocal);
   void add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName);
-  void send_message(String msg);
+  // void send_message(String msg);
   void get_state_peer_connection();
   void poll();
   void queue_signal(StringName p_name, VARIANT_ARG_LIST);
+  void queue_packet(const webrtc::DataBuffer&);
 
   WebRTCPeer();
   ~WebRTCPeer();
 
 
-/** PeerConnectionObserver callback functions **/
+  /** Inherited from PacketPeer: **/
+  // @TODO add "override" keyword to all of these inherited methods.
+  int get_available_packet_count() const;
+  Error get_packet(const uint8_t **r_buffer, int &r_buffer_size); ///< buffer is GONE after next get_packet
+  Error put_packet(const uint8_t *p_buffer, int p_buffer_size);
+
+  int get_max_packet_size() const;
+
+  /** PeerConnectionObserver callback functions **/
   class GD_PCO : public webrtc::PeerConnectionObserver {
   public:
     WebRTCPeer* parent;

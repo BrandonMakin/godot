@@ -14,7 +14,7 @@ void WebRTCPeer::_bind_methods()
   ClassDB::bind_method(D_METHOD("create_offer"), &WebRTCPeer::create_offer);
   ClassDB::bind_method(D_METHOD("set_local_description", "sdp", "isOffer"), &WebRTCPeer::set_local_description);
   ClassDB::bind_method(D_METHOD("set_remote_description", "sdp", "isOffer"), &WebRTCPeer::set_remote_description);
-  ClassDB::bind_method(D_METHOD("send_message", "message"), &WebRTCPeer::send_message);
+  // ClassDB::bind_method(D_METHOD("send_message", "message"), &WebRTCPeer::send_message);
   ClassDB::bind_method(D_METHOD("get_state_peer_connection"), &WebRTCPeer::get_state_peer_connection);
   ClassDB::bind_method(D_METHOD("poll"), &WebRTCPeer::poll);
   ClassDB::bind_method(
@@ -26,7 +26,7 @@ void WebRTCPeer::_bind_methods()
   );
 
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "message")));
-  ADD_SIGNAL(MethodInfo("new_peer_message", PropertyInfo(Variant::STRING, "message")));
+  // ADD_SIGNAL(MethodInfo("new_peer_message", PropertyInfo(Variant::STRING, "message")));
   ADD_SIGNAL(MethodInfo("offer_created",
                         PropertyInfo(Variant::STRING, "type"),
                         PropertyInfo(Variant::STRING, "sdp")
@@ -44,6 +44,7 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
                             , dco(this)
 {
   mutex_signal_queue = Mutex::create(true);
+//   mutex_packet_queue = Mutex::create(true);
 
   // 1. Create a PeerConnectionFactoryInterface.
   signaling_thread = new rtc::Thread;
@@ -199,24 +200,51 @@ void WebRTCPeer::add_ice_candidate(String sdpMidName, int sdpMlineIndexName, Str
   // @TODO do something if there's an error adding the candidate [if (!peer_connection->AddIceCandidate(candidate))]
 }
 
-void WebRTCPeer::send_message(String msg)
+// void WebRTCPeer::send_message(String msg)
+// {
+//   std::string string_msg = msg.utf8().get_data();
+//   put_packet((uint8_t *)(string_msg.c_str()), string_msg.size());
+//   // webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(string_msg.c_str(), string_msg.size()), true);
+//   // std::cout << "Send(" << data_channel->state() << ")" << std::endl;
+//   // data_channel->Send(buffer);
+// }
+
+int WebRTCPeer::get_available_packet_count() const
 {
-  std::string string_msg = msg.utf8().get_data();
-  webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(string_msg.c_str(), string_msg.size()), true);
-  std::cout << "Send(" << data_channel->state() << ")" << std::endl;
-  // std::cout << "[kConnecting = " << webrtc::DataChannelInterface::DataState.kConnecting << "]\n";
-  data_channel->Send(buffer);
+  return 1;
+}
+
+Error WebRTCPeer::get_packet(const uint8_t **r_buffer, int &r_buffer_size)
+{
+  return OK;
+}
+
+
+Error WebRTCPeer::put_packet(const uint8_t *p_buffer, int p_buffer_size)
+{
+  webrtc::DataBuffer webrtc_buffer(rtc::CopyOnWriteBuffer(p_buffer_size, p_buffer_size), true);
+  data_channel->Send(webrtc_buffer);
+
+  return OK; // @TODO properly return any Error we may get.
+}
+
+int WebRTCPeer::get_max_packet_size() const
+{
+  return 1;
 }
 
 void WebRTCPeer::poll()
 {
-  mutex_signal_queue->lock();
+  std::function<void()> signal;
   while (!signal_queue.empty())
   {
-    signal_queue.front()();
+    mutex_signal_queue->lock();
+    signal = signal_queue.front();
     signal_queue.pop();
+    mutex_signal_queue->unlock();
+
+    signal();
   }
-  mutex_signal_queue->unlock();
 }
 
 void WebRTCPeer::queue_signal(StringName p_name, VARIANT_ARG_DECLARE)
@@ -230,6 +258,12 @@ void WebRTCPeer::queue_signal(StringName p_name, VARIANT_ARG_DECLARE)
   mutex_signal_queue->unlock();
 }
 
+void WebRTCPeer::queue_packet(const webrtc::DataBuffer& buffer)
+{
+//   mutex_packet_queue->lock();
+  packet_queue.push(buffer);
+//   mutex_packet_queue->unlock();
+}
 
 void WebRTCPeer::get_state_peer_connection()
 {
@@ -261,4 +295,7 @@ WebRTCPeer::~WebRTCPeer()
   // delete peerConnectionFactory;
   memdelete(mutex_signal_queue);
   mutex_signal_queue = NULL;
+
+//   memdelete(mutex_packet_queue);
+//   mutex_packet_queue = NULL;
 }
