@@ -12,9 +12,16 @@ void WebRTCPeer::GD_DCO::OnStateChange() {
 };
 
 void WebRTCPeer::GD_DCO::OnMessage(const webrtc::DataBuffer& buffer) {
-  String message = std::string(buffer.data.data<char>(), buffer.data.size()).c_str();
+  // String message = std::string(buffer.data.data<char>(), buffer.data.size()).c_str();
   // parent->queue_signal("notify", message);
-  parent->queue_packet(buffer);
+  // parent->queue_packet(&buffer.data);
+
+  const uint8_t* data = buffer.data.data<uint8_t>();
+
+  uint8_t* memory_controlled_buffer = new uint8_t[buffer.data.size()];
+  std::copy(data, data + buffer.data.size(), memory_controlled_buffer);
+
+  parent->alt_queue_packet(&memory_controlled_buffer, buffer.data.size());
 };
 
 void WebRTCPeer::GD_DCO::OnBufferedAmountChange(uint64_t previous_amount) {

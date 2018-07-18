@@ -44,7 +44,11 @@ WebRTCPeer::WebRTCPeer() :  pco(this)
                             , dco(this)
 {
   mutex_signal_queue = Mutex::create(true);
-//   mutex_packet_queue = Mutex::create(true);
+  mutex_packet_queue = Mutex::create(true);
+
+  packet_queue_size = 0;
+
+  // packet_rbuffer.resize(16);
 
   // 1. Create a PeerConnectionFactoryInterface.
   signaling_thread = new rtc::Thread;
@@ -211,11 +215,42 @@ void WebRTCPeer::add_ice_candidate(String sdpMidName, int sdpMlineIndexName, Str
 
 int WebRTCPeer::get_available_packet_count() const
 {
-  return 1;
+  return packet_queue_size;
 }
 
 Error WebRTCPeer::get_packet(const uint8_t **r_buffer, int &r_buffer_size)
 {
+  /*
+  Hold a current_packet buffer (a reference to the last popped packet)
+  and set *r_buffer = current_packet (try to get it to uint8_t without copying)
+  (may need to copy because WebRTC deletes the reference)
+  and r_size to the size of current_packet
+  ---
+  on every get_packet call:
+  pop front from queue into current_buffer,
+  set r_buffer to buffer start (*r_buffer = current_packet)
+  set r_size accordingly. You have a PacketPeer :)
+  */
+
+  if (packet_queue_size == 0)
+    return ERR_UNAVAILABLE;
+
+    uint8_t** current_packet = packet_queue.front();
+    *r_buffer = *current_packet;
+    r_buffer_size = packet_sizes_queue.front();
+
+    packet_queue.pop();
+    packet_sizes_queue.pop();
+
+  // rtc::CopyOnWriteBuffer current_packet; // packet_queue.front();
+  // uint8_t* current_packet;
+  // packet_rbuffer.read(&current_packet, 1);
+  //
+  // *r_buffer = current_packet.data<uint8_t>();  // .data returns the Buffer's data as a uint8_t*
+  // *r_buffer = current_packet;
+  // r_buffer_size = current_packet.size();
+
+  --packet_queue_size;
   return OK;
 }
 
@@ -244,6 +279,7 @@ void WebRTCPeer::poll()
     mutex_signal_queue->unlock();
 
     signal();
+
   }
 }
 
@@ -258,12 +294,16 @@ void WebRTCPeer::queue_signal(StringName p_name, VARIANT_ARG_DECLARE)
   mutex_signal_queue->unlock();
 }
 
-void WebRTCPeer::queue_packet(const webrtc::DataBuffer& buffer)
+void WebRTCPeer::alt_queue_packet(uint8_t** buffer, int buffer_size)
 {
-//   mutex_packet_queue->lock();
+  mutex_packet_queue->lock();
   packet_queue.push(buffer);
-//   mutex_packet_queue->unlock();
+  packet_sizes_queue.push(buffer_size);
+  // packet_rbuffer.write(buffer, 1);
+  ++packet_queue_size;
+  mutex_packet_queue->unlock();
 }
+
 
 void WebRTCPeer::get_state_peer_connection()
 {
@@ -296,6 +336,6 @@ WebRTCPeer::~WebRTCPeer()
   memdelete(mutex_signal_queue);
   mutex_signal_queue = NULL;
 
-//   memdelete(mutex_packet_queue);
-//   mutex_packet_queue = NULL;
+  memdelete(mutex_packet_queue);
+  mutex_packet_queue = NULL;
 }

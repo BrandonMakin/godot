@@ -2,12 +2,13 @@
 #define WEBRTC_PEER_H
 
 // #include "queued_signal.h"
-#include <functional>   // std::function
-#include <iostream>     // remove eventually
-#include "os/mutex.h"   // mutex // necessary to include this? it seemed to work find without including
-#include "ustring.h"    // String
+#include <functional>         // std::function
+#include <iostream>           // remove eventually
+#include "os/mutex.h"         // mutex // necessary to include this? it seemed to work find without including
+#include "ustring.h"          // String
 #include "reference.h"
 #include "io/packet_peer.h"
+#include "ring_buffer.h"      // RingBuffer
 #include "api/peerconnectioninterface.h"
 #include "media/base/mediaengine.h"       // needed for CreateModularPeerConnectionFactory
 
@@ -27,7 +28,11 @@ public:
 
   std::string name = "receiver";
   std::queue< std::function<void()> > signal_queue;
-  std::queue< webrtc::DataBuffer > packet_queue;
+  std::queue< uint8_t** > packet_queue;
+  std::queue< int > packet_sizes_queue;
+  // RingBuffer< rtc::CopyOnWriteBuffer > packet_rbuffer;
+  // RingBuffer< uint8_t* > packet_rbuffer;
+  int packet_queue_size;
 
   int create_offer();
   void set_remote_description(String sdp, bool isOffer);
@@ -38,7 +43,9 @@ public:
   void get_state_peer_connection();
   void poll();
   void queue_signal(StringName p_name, VARIANT_ARG_LIST);
-  void queue_packet(const webrtc::DataBuffer&);
+  // void queue_packet(const webrtc::DataBuffer&);
+  // void queue_packet(const rtc::CopyOnWriteBuffer*);
+  void alt_queue_packet(uint8_t**, int);
 
   WebRTCPeer();
   ~WebRTCPeer();
