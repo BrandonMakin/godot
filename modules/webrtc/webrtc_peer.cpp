@@ -235,8 +235,8 @@ Error WebRTCPeer::get_packet(const uint8_t **r_buffer, int &r_buffer_size)
   if (packet_queue_size == 0)
     return ERR_UNAVAILABLE;
 
-    uint8_t** current_packet = packet_queue.front();
-    *r_buffer = *current_packet;
+    uint8_t* current_packet = packet_queue.front();
+    *r_buffer = current_packet;
     r_buffer_size = packet_sizes_queue.front();
 
     packet_queue.pop();
@@ -294,7 +294,7 @@ void WebRTCPeer::queue_signal(StringName p_name, VARIANT_ARG_DECLARE)
   mutex_signal_queue->unlock();
 }
 
-void WebRTCPeer::alt_queue_packet(uint8_t** buffer, int buffer_size)
+void WebRTCPeer::alt_queue_packet(uint8_t* buffer, int buffer_size)
 {
   mutex_packet_queue->lock();
   packet_queue.push(buffer);

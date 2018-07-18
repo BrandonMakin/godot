@@ -28,7 +28,7 @@ public:
 
   std::string name = "receiver";
   std::queue< std::function<void()> > signal_queue;
-  std::queue< uint8_t** > packet_queue;
+  std::queue< uint8_t* > packet_queue;
   std::queue< int > packet_sizes_queue;
   // RingBuffer< rtc::CopyOnWriteBuffer > packet_rbuffer;
   // RingBuffer< uint8_t* > packet_rbuffer;
@@ -45,7 +45,7 @@ public:
   void queue_signal(StringName p_name, VARIANT_ARG_LIST);
   // void queue_packet(const webrtc::DataBuffer&);
   // void queue_packet(const rtc::CopyOnWriteBuffer*);
-  void alt_queue_packet(uint8_t**, int);
+  void alt_queue_packet(uint8_t*, int);
 
   WebRTCPeer();
   ~WebRTCPeer();
