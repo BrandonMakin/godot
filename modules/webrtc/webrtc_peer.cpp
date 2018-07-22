@@ -257,7 +257,7 @@ Error WebRTCPeer::get_packet(const uint8_t **r_buffer, int &r_buffer_size)
 
 Error WebRTCPeer::put_packet(const uint8_t *p_buffer, int p_buffer_size)
 {
-  webrtc::DataBuffer webrtc_buffer(rtc::CopyOnWriteBuffer(p_buffer_size, p_buffer_size), true);
+  webrtc::DataBuffer webrtc_buffer(rtc::CopyOnWriteBuffer(p_buffer, p_buffer_size), true);
   data_channel->Send(webrtc_buffer);
 
   return OK; // @TODO properly return any Error we may get.
