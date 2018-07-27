@@ -32,9 +32,11 @@
 
 // #include "main.cpp"
 #include "webrtc_peer.h"
+#include "networked_multiplayer_webrtc.h"
 
 void register_webrtc_types() {
   ClassDB::register_class<WebRTCPeer>();
+  ClassDB::register_class<NetworkedMultiplayerWebRTC>();
 }
 
 void unregister_webrtc_types() {} // nothing to do here

@@ -21,7 +21,7 @@ void WebRTCPeer::GD_DCO::OnMessage(const webrtc::DataBuffer& buffer) {
   uint8_t* memory_controlled_buffer = new uint8_t[buffer.data.size()];
   std::copy(data, data + buffer.data.size(), memory_controlled_buffer);
 
-  parent->alt_queue_packet(memory_controlled_buffer, buffer.data.size());
+  parent->queue_packet(memory_controlled_buffer, buffer.data.size());
 };
 
 void WebRTCPeer::GD_DCO::OnBufferedAmountChange(uint64_t previous_amount) {

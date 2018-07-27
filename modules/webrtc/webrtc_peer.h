@@ -39,13 +39,13 @@ public:
   void set_local_description(String sdp, bool isOffer);
   void set_description(String sdp, bool isOffer, bool isLocal);
   void add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName);
-  // void send_message(String msg);
-  void get_state_peer_connection();
   void poll();
   void queue_signal(StringName p_name, VARIANT_ARG_LIST);
   // void queue_packet(const webrtc::DataBuffer&);
   // void queue_packet(const rtc::CopyOnWriteBuffer*);
-  void alt_queue_packet(uint8_t*, int);
+  void queue_packet(uint8_t*, int);
+  // webrtc::PeerConnectionInterface::SignalingState _get_state_peer_connection();
+  bool _is_active();
 
   WebRTCPeer();
   ~WebRTCPeer();

@@ -15,9 +15,9 @@ void WebRTCPeer::_bind_methods()
   ClassDB::bind_method(D_METHOD("set_local_description", "sdp", "isOffer"), &WebRTCPeer::set_local_description);
   ClassDB::bind_method(D_METHOD("set_remote_description", "sdp", "isOffer"), &WebRTCPeer::set_remote_description);
   // ClassDB::bind_method(D_METHOD("send_message", "message"), &WebRTCPeer::send_message);
-  ClassDB::bind_method(D_METHOD("get_state_peer_connection"), &WebRTCPeer::get_state_peer_connection);
+  // ClassDB::bind_method(D_METHOD("_get_state_peer_connection"), &WebRTCPeer::get_state_peer_connection);
   ClassDB::bind_method(D_METHOD("poll"), &WebRTCPeer::poll);
-  ClassDB::bind_method(
+  ClassDB::bind_method( // @TODO rename arguments: give them shorter names
     D_METHOD( "add_ice_candidate",
               "candidateSdpMidName",
               "candidateSdpMlineIndexName",
@@ -186,7 +186,6 @@ void WebRTCPeer::add_ice_candidate(String sdpMidName, int sdpMlineIndexName, Str
   queue_signal("notify", "WebRTCPeer::add_ice_candidate - adding candidate");
 
 
-  // @TODO [DONE] covert String candidate to a webrtc::IceCandidateInterface*, I think
   webrtc::SdpParseError *error = nullptr;
   webrtc::IceCandidateInterface *candidate = webrtc::CreateIceCandidate(
     sdpMidName.utf8().get_data(),
@@ -234,13 +233,14 @@ Error WebRTCPeer::get_packet(const uint8_t **r_buffer, int &r_buffer_size)
 
   if (packet_queue_size == 0)
     return ERR_UNAVAILABLE;
-
+    mutex_packet_queue->lock();
     uint8_t* current_packet = packet_queue.front();
     *r_buffer = current_packet;
     r_buffer_size = packet_sizes_queue.front();
 
     packet_queue.pop();
     packet_sizes_queue.pop();
+    mutex_packet_queue->unlock();
 
   // rtc::CopyOnWriteBuffer current_packet; // packet_queue.front();
   // uint8_t* current_packet;
@@ -294,7 +294,7 @@ void WebRTCPeer::queue_signal(StringName p_name, VARIANT_ARG_DECLARE)
   mutex_signal_queue->unlock();
 }
 
-void WebRTCPeer::alt_queue_packet(uint8_t* buffer, int buffer_size)
+void WebRTCPeer::queue_packet(uint8_t* buffer, int buffer_size)
 {
   mutex_packet_queue->lock();
   packet_queue.push(buffer);
@@ -305,29 +305,34 @@ void WebRTCPeer::alt_queue_packet(uint8_t* buffer, int buffer_size)
 }
 
 
-void WebRTCPeer::get_state_peer_connection()
+// webrtc::PeerConnectionInterface::SignalingState WebRTCPeer::_get_state_peer_connection()
+// {
+//   // queue_signal("notify", "state: " + peer_connection->signaling_state());
+//   // std::cout << name << "- peer connection state: " << peer_connection->signaling_state() << std::endl;
+//   return peer_connection->signaling_state();
+//
+//   // String statename = ":(";
+//   // switch (state)
+//   // {
+//   //   case webrtc::PeerConnectionInterface::SignalingState.kStable:
+//   //     statename = "kStable";
+//   //   case kHaveLocalOffer:
+//   //     statename = "kHaveLocalOffer";
+//   //   case kHaveLocalPrAnswer:
+//   //     statename = "kHaveLocalPrAnswer";
+//   //   case kHaveRemoteOffer:
+//   //     statename = "kHaveRemoteOffer";
+//   //   case kHaveRemotePrAnswer:
+//   //     statename = "kHaveRemotePrAnswer";
+//   //   case kClosed:
+//   //     statename = "kClosed";
+//   // }
+//   // return "" + state;
+// }
+
+bool WebRTCPeer::_is_active()
 {
-  std::cout << name << "- peer connection state: " << peer_connection->signaling_state() << std::endl;
-  queue_signal("notify", "state: " + peer_connection->signaling_state());
-
-
-  // String statename = ":(";
-  // switch (state)
-  // {
-  //   case webrtc::PeerConnectionInterface::SignalingState.kStable:
-  //     statename = "kStable";
-  //   case kHaveLocalOffer:
-  //     statename = "kHaveLocalOffer";
-  //   case kHaveLocalPrAnswer:
-  //     statename = "kHaveLocalPrAnswer";
-  //   case kHaveRemoteOffer:
-  //     statename = "kHaveRemoteOffer";
-  //   case kHaveRemotePrAnswer:
-  //     statename = "kHaveRemotePrAnswer";
-  //   case kClosed:
-  //     statename = "kClosed";
-  // }
-  // return "" + state;
+  return data_channel->state();// == kOpen;
 }
 
 WebRTCPeer::~WebRTCPeer()
