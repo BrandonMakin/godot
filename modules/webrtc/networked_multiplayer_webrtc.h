@@ -6,14 +6,14 @@
 
 class NetworkedMultiplayerWebRTC : public NetworkedMultiplayerPeer {
 
-	// GDCLASS(NetworkedMultiplayerWebRTC, NetworkedMultiplayerPeer);
+	GDCLASS(NetworkedMultiplayerWebRTC, NetworkedMultiplayerPeer);
 
 protected:
-  void _bind_methods();
+  static void _bind_methods();
 
 private:
   // bool active;
-	bool server = false;
+	bool _is_server = false;
 	uint32_t unique_id;
 	int target_peer;
   int max_clients;
@@ -35,7 +35,7 @@ private:
 
   bool refuse_connections = false;
   ConnectionStatus connection_status;
-  
+
 	// int transfer_channel;
 	// int channel_count;
 	// bool always_ordered;
@@ -47,14 +47,22 @@ private:
 	Map<int, WebRTCPeer *> peer_map;
 
 public:
+  ~NetworkedMultiplayerWebRTC();
+
+  void _notify(String message, int p_id);
+  void _offer_created(String type, String sdp, int p_id);
+  void _new_ice_candidate(String candidateSdpMidName, int candidateSdpMlineIndexName, String candidateSdpName, int p_id);
+
   // NetworkedMultiplayerWebRTC();
   Error create_server( int max_clients=32 );
   void create_client();
-  int accept_client(uint32_t id);
+  int accept_client();
+  void set_unique_id(int id);
+  void connect_signals(WebRTCPeer* peer, int id);
 
-  void set_remote_description(String sdp, bool isOffer, int peer_id);
-  void set_local_description(String sdp, bool isOffer, int peer_id);
-  void add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName, int peer_id);
+  Error set_remote_description(String sdp, bool isOffer, int peer_id);
+  Error set_local_description(String sdp, bool isOffer, int peer_id);
+  Error add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName, int peer_id);
 
   uint32_t _gen_unique_id() const;
   Packet webrtc_packet_create(const uint8_t* buffer, int buffer_size, int from);
@@ -62,6 +70,8 @@ public:
   void _pop_current_packet();
 
   // WebRTC peer stuff:
+  void create_offer();
+
 
   // Overridden from PacketPeer:
   Error get_packet(const uint8_t **r_buffer, int &r_buffer_size); ///< buffer is GONE after next get_packet

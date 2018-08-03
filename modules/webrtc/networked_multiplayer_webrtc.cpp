@@ -7,7 +7,9 @@ void NetworkedMultiplayerWebRTC::_bind_methods()
 {
   ClassDB::bind_method(D_METHOD("create_server", "max_clients"), &NetworkedMultiplayerWebRTC::create_server);
   ClassDB::bind_method(D_METHOD("create_client"), &NetworkedMultiplayerWebRTC::create_client);
+  ClassDB::bind_method(D_METHOD("create_offer"), &NetworkedMultiplayerWebRTC::create_offer);
   ClassDB::bind_method(D_METHOD("accept_client"), &NetworkedMultiplayerWebRTC::accept_client);
+  ClassDB::bind_method(D_METHOD("set_unique_id", "peer_id"), &NetworkedMultiplayerWebRTC::set_unique_id);
   ClassDB::bind_method(D_METHOD("set_local_description", "sdp", "isOffer", "peer_id"), &NetworkedMultiplayerWebRTC::set_local_description);
   ClassDB::bind_method(D_METHOD("set_remote_description", "sdp", "isOffer", "peer_id"), &NetworkedMultiplayerWebRTC::set_remote_description);
   ClassDB::bind_method( // @TODO rename arguments: give them shorter names
@@ -18,6 +20,26 @@ void NetworkedMultiplayerWebRTC::_bind_methods()
               "peer_id"
     ), &NetworkedMultiplayerWebRTC::add_ice_candidate
   );
+  ClassDB::bind_method(D_METHOD("_notify"), &_notify);
+  ClassDB::bind_method(D_METHOD("_offer_created"), &_offer_created);
+  ClassDB::bind_method(D_METHOD("_new_ice_candidate"), &_new_ice_candidate);
+
+  ADD_SIGNAL(MethodInfo("notify",
+                        PropertyInfo(Variant::STRING, "message"),
+                        PropertyInfo(Variant::INT, "peer_id")
+  ));
+  ADD_SIGNAL(MethodInfo("offer_created",
+                        PropertyInfo(Variant::STRING, "type"),
+                        PropertyInfo(Variant::STRING, "sdp"),
+                        PropertyInfo(Variant::INT, "peer_id")
+  ));
+  ADD_SIGNAL(MethodInfo("new_ice_candidate",
+                        PropertyInfo(Variant::STRING, "candidateSdpMidName"),
+                        PropertyInfo(Variant::INT, "candidateSdpMlineIndexName"),
+                        PropertyInfo(Variant::STRING, "candidateSdpName"),
+                        PropertyInfo(Variant::INT, "peer_id")
+  ));
+  ADD_SIGNAL(MethodInfo("client_accepted", PropertyInfo(Variant::INT, "peer_id")));
 }
 
 void NetworkedMultiplayerWebRTC::set_transfer_mode(TransferMode p_mode)
@@ -47,7 +69,7 @@ int NetworkedMultiplayerWebRTC::get_packet_peer() const
 bool NetworkedMultiplayerWebRTC::is_server() const {
 	// ERR_FAIL_COND_V(!active, false);
 
-	return server;
+	return _is_server;
 }
 
 void NetworkedMultiplayerWebRTC::poll()
@@ -74,6 +96,21 @@ int NetworkedMultiplayerWebRTC::get_unique_id() const
   return unique_id;
 }
 
+void NetworkedMultiplayerWebRTC::_notify(String message, int p_id)
+{
+  emit_signal("notify", message, p_id);
+}
+
+void NetworkedMultiplayerWebRTC::_offer_created(String type, String sdp, int p_id)
+{
+  emit_signal("offer_created", type, sdp, p_id);
+}
+
+void NetworkedMultiplayerWebRTC::_new_ice_candidate(String candidateSdpMidName, int candidateSdpMlineIndexName, String candidateSdpName, int p_id)
+{
+  emit_signal("new_ice_candidate", candidateSdpMidName, candidateSdpMlineIndexName, candidateSdpName, p_id);
+}
+
 void NetworkedMultiplayerWebRTC::set_refuse_new_connections(bool p_enable)
 {
   refuse_connections = p_enable;
@@ -95,44 +132,66 @@ Error NetworkedMultiplayerWebRTC::create_server(int max_clients)
   this->max_clients = max_clients;
 
   unique_id = 1;
-  server = true;
+  _is_server = true;
   return OK;
 }
 
 void NetworkedMultiplayerWebRTC::create_client()
 {
-  // should I create the peer here? probably.
-  unique_id = _gen_unique_id();
-  server = false;
+  _is_server = false;
+  peer_map[1] = memnew(WebRTCPeer);
+  connect_signals(peer_map[1], 1);
+  // unique_id = _gen_unique_id();
   // return OK;
 }
 
-int NetworkedMultiplayerWebRTC::accept_client(uint32_t id)
+int NetworkedMultiplayerWebRTC::accept_client()
 {
   // called by the user in response to a signal saying there's a new client
+  int id = _gen_unique_id();
   ERR_FAIL_COND_V(client_count > max_clients, ERR_ALREADY_EXISTS);
   ++client_count;
 
   // uint32_t id = _gen_unique_id();
-  peer_map[id] = memnew(WebRTCPeer);  // generate a new peer_connection
-                                      // add the new peer connection to the peer_map
-  // @TODO connect all of the signals from the new WebRTCPeer to this NetworkedMultiplayerWebRTC
-  return id;
+  WebRTCPeer* peer = memnew(WebRTCPeer);  // generate a new peer_connection
+  peer_map[id] = peer;                    // add the new peer connection to the peer_map
+
+  // connect all of the signals from the new WebRTCPeer to this NetworkedMultiplayerWebRTC:
+  connect_signals(peer, id);
+
+  emit_signal("client_accepted", id);
+  return OK;
 }
 
-void NetworkedMultiplayerWebRTC::set_remote_description(String sdp, bool isOffer, int peer_id)
+void NetworkedMultiplayerWebRTC::set_unique_id(int id)
 {
+  unique_id = id;
+  emit_signal("notify", "unique_id set", id);
+  std::cout << "setting id. id: " << unique_id << std::endl;
+};
+
+Error NetworkedMultiplayerWebRTC::set_remote_description(String sdp, bool isOffer, int peer_id)
+{
+  ERR_FAIL_COND_V(!peer_map.has(peer_id), ERR_DOES_NOT_EXIST)
   //call the NetworkedMultiplayerWebRTC function of the same name on the NetworkedMultiplayerWebRTC in the map with the given peer_id
+  peer_map[peer_id]->set_remote_description(sdp, isOffer);
+  return OK;
 }
 
-void NetworkedMultiplayerWebRTC::set_local_description(String sdp, bool isOffer, int peer_id)
+Error NetworkedMultiplayerWebRTC::set_local_description(String sdp, bool isOffer, int peer_id)
 {
+  ERR_FAIL_COND_V(!peer_map.has(peer_id), ERR_DOES_NOT_EXIST)
   //call the NetworkedMultiplayerWebRTC function of the same name on the NetworkedMultiplayerWebRTC in the map with the given peer_id
+  peer_map[peer_id]->set_local_description(sdp, isOffer);
+  return OK;
 }
 
-void NetworkedMultiplayerWebRTC::add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName, int peer_id)
+Error NetworkedMultiplayerWebRTC::add_ice_candidate(String sdpMidName, int sdpMlineIndexName, String sdpName, int peer_id)
 {
   //call the NetworkedMultiplayerWebRTC function of the same name on the NetworkedMultiplayerWebRTC in the map with the given peer_id
+  ERR_FAIL_COND_V(!peer_map.has(peer_id), ERR_DOES_NOT_EXIST)
+  peer_map[peer_id]->add_ice_candidate(sdpMidName, sdpMlineIndexName, sdpName);
+  return OK;
 }
 
 NetworkedMultiplayerWebRTC::Packet NetworkedMultiplayerWebRTC::webrtc_packet_create(const uint8_t* buffer, int buffer_size, int from)
@@ -211,7 +270,7 @@ Error NetworkedMultiplayerWebRTC::put_packet(const uint8_t *p_buffer, int p_buff
 	encode_uint32(packet_flags, &put_buffer[8]); // Dest ID - @TODO Check if this is even necessary for WebRTC (b/c not Enet)
 	copymem(&put_buffer[12], p_buffer, p_buffer_size);
 
-	if (server) {
+	if (_is_server) {
 
     if (target_peer > 0) {
       E->value()->put_packet(put_buffer, p_buffer_size); // Send to server for broadcast
@@ -257,4 +316,21 @@ void NetworkedMultiplayerWebRTC::_pop_current_packet() {
     current_packet.buffer_size = 0;
 		current_packet.from = 0;
 	}
+}
+
+void NetworkedMultiplayerWebRTC::create_offer()
+{
+  ERR_FAIL_COND(_is_server);
+  peer_map[1]->create_offer();
+}
+
+void NetworkedMultiplayerWebRTC::connect_signals(WebRTCPeer* peer, int id)
+{
+  peer->connect("offer_created", this, "_offer_created", varray(id));
+  peer->connect("new_ice_candidate", this, "_new_ice_candidate", varray(id));
+  peer->connect("notify", this, "_notify", varray(id));
+}
+
+NetworkedMultiplayerWebRTC::~NetworkedMultiplayerWebRTC()
+{
 }
