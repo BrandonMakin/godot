@@ -19,22 +19,22 @@ void WebRTCPeer::_bind_methods()
   ClassDB::bind_method(D_METHOD("poll"), &WebRTCPeer::poll);
   ClassDB::bind_method( // @TODO rename arguments: give them shorter names
     D_METHOD( "add_ice_candidate",
-              "candidateSdpMidName",
-              "candidateSdpMlineIndexName",
-              "candidateSdpName"
+              "sdp_mid_name",
+              "sdp_mline_index_name",
+              "sdp_name"
     ), &WebRTCPeer::add_ice_candidate
   );
 
   ADD_SIGNAL(MethodInfo("notify", PropertyInfo(Variant::STRING, "message")));
   // ADD_SIGNAL(MethodInfo("new_peer_message", PropertyInfo(Variant::STRING, "message")));
   ADD_SIGNAL(MethodInfo("offer_created",
-                        PropertyInfo(Variant::STRING, "type"),
-                        PropertyInfo(Variant::STRING, "sdp")
+                        PropertyInfo(Variant::STRING, "sdp"),
+                        PropertyInfo(Variant::BOOL, "is_offer")
   ));
   ADD_SIGNAL(MethodInfo("new_ice_candidate",
-                        PropertyInfo(Variant::STRING, "candidateSdpMidName"),
-                        PropertyInfo(Variant::INT, "candidateSdpMlineIndexName"),
-                        PropertyInfo(Variant::STRING, "candidateSdpName")
+                        PropertyInfo(Variant::STRING, "sdp_mid_name"),
+                        PropertyInfo(Variant::INT, "sdp_mline_index_name"),
+                        PropertyInfo(Variant::STRING, "sdp_name")
   ));
 }
 
@@ -332,7 +332,7 @@ void WebRTCPeer::queue_packet(uint8_t* buffer, int buffer_size)
 
 bool WebRTCPeer::_is_active()
 {
-  return data_channel->state();// == kOpen;
+  return data_channel->state() == webrtc::DataChannelInterface::DataState::kOpen;
 }
 
 WebRTCPeer::~WebRTCPeer()

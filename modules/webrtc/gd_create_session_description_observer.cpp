@@ -23,7 +23,9 @@ void WebRTCPeer::GD_CSDO::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
   //Serialize:
   std::string sdp; // sdp = session description protocol
   desc->ToString(&sdp);
-  parent->queue_signal("offer_created", desc->type().c_str(), sdp.c_str());
+  String type = desc->type().c_str();
+  bool isOffer = type == "offer";
+  parent->queue_signal("offer_created", sdp.c_str(), isOffer);
 
   std::cout << parent->name << " state: " << parent->peer_connection->signaling_state() << std::endl;
   // parent->queue_signal("notify", "state: " + parent->peer_connection->signaling_state());

@@ -50,7 +50,7 @@ public:
   ~NetworkedMultiplayerWebRTC();
 
   void _notify(String message, int p_id);
-  void _offer_created(String type, String sdp, int p_id);
+  void _offer_created(String sdp, bool isOffer, int p_id);
   void _new_ice_candidate(String candidateSdpMidName, int candidateSdpMlineIndexName, String candidateSdpName, int p_id);
 
   // NetworkedMultiplayerWebRTC();
